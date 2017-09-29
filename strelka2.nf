@@ -28,6 +28,7 @@ params.mem            = "20"
 params.output_folder  = "strelka_output"
 params.mode           = "somatic"
 params.exome          = null
+params.rna            = null
 
 log.info ""
 log.info "----------------------------------------------------------------"
@@ -70,6 +71,7 @@ if (params.help) {
     log.info "--output_folder        PATH                 Output directory for vcf files (default=strelka_ouptut)"
     log.info "--config               FILE                 Use custom configuration file"
     log.info "--exome                                     automatically set up parameters for exome data"
+    log.info "--rna                                       automatically set up parameters for rna data"
     log.info ""
     log.info "Flags:"
     log.info "--help                                      Display this message"
@@ -87,6 +89,8 @@ if (params.config==null){ config = workflow + ".ini" } else {config=params.confi
 
 exome=""
 if (params.exome) { exome="--exome" }
+rna=""
+if (params.rna) { rna="--rna" }
 
 /* Software information */
 log.info ""
@@ -101,6 +105,7 @@ log.info "output_folder = ${params.output_folder}"
 log.info "mode          = ${params.mode}"
 log.info "workflow      = ${workflow}"
 log.info "exome         = ${params.exome}"
+log.info "rna           = ${params.rna}"
 log.info "config        = ${config}"
 log.info ""
 }
@@ -121,13 +126,14 @@ if (params.mode=="somatic"){
   val workflow
   val config
   val exome
+  val rna
 
   output:
   file 'strelkaAnalysis/results/variants/*' into vcffiles
 
   shell:
   '''
-  !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{exome} --runDir="strelkaAnalysis"
+  !{workflow} --tumorBam=!{pair[0]} --normalBam=!{pair[2]} --referenceFasta=!{fasta_ref} --config=!{config} !{rna} !{exome} --runDir="strelkaAnalysis"
   cd strelkaAnalysis
   ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
   cd results/variants
@@ -159,6 +165,7 @@ if (params.mode=="germline"){
     val workflow
     val config
     val exome
+    val rna
     
     output:
     file 'strelkaAnalysis/results/variants/*' into vcffiles
@@ -166,7 +173,7 @@ if (params.mode=="germline"){
     shell:
     '''
     runDir="results/variants/"
-    !{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{exome} --runDir="strelkaAnalysis"
+    !{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir="strelkaAnalysis"
     cd strelkaAnalysis
     ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
     toto=`pwd`
