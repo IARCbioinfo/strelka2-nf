@@ -85,7 +85,7 @@ else { println "ERROR: wrong value for --mode option. Must be somatic or germlin
 
 if (params.config==null){ config = workflow + ".ini" } else {config=params.config}
 
-exome="no"
+exome=""
 if (params.exome) { exome="--exome" }
 
 /* Software information */
@@ -100,7 +100,7 @@ log.info "mem           = ${params.mem}Gb"
 log.info "output_folder = ${params.output_folder}"
 log.info "mode          = ${params.mode}"
 log.info "workflow      = ${workflow}"
-log.info "exome         = ${exome}"
+log.info "exome         = ${params.exome}"
 log.info "config        = ${config}"
 log.info ""
 }
