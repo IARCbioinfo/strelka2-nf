@@ -133,7 +133,7 @@ if (params.mode=="somatic"){
 
   shell:
   '''
-  !{workflow} --tumorBam=!{pair[0]} --normalBam=!{pair[2]} --referenceFasta=!{fasta_ref} --config=!{config} !{rna} !{exome} --runDir="strelkaAnalysis"
+  !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis
   cd strelkaAnalysis
   ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
   cd results/variants
@@ -173,7 +173,7 @@ if (params.mode=="germline"){
     shell:
     '''
     runDir="results/variants/"
-    !{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir="strelkaAnalysis"
+    !{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis
     cd strelkaAnalysis
     ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
     toto=`pwd`
