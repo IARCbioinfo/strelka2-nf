@@ -71,7 +71,7 @@ if (params.help) {
     log.info "--cpu                  INTEGER              Number of cpu to use (default=2)"
     log.info "--output_folder        PATH                 Output directory for vcf files (default=strelka_ouptut)"
     log.info "--config               FILE                 Use custom configuration file"
-    log.info "--AF                                        get Allele frequency and Filter
+    log.info "--AF                                        get Allele frequency and Filter"
     log.info "--exome                                     automatically set up parameters for exome data"
     log.info "--rna                                       automatically set up parameters for rna data"
     log.info ""
