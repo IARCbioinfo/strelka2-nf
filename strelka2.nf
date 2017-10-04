@@ -27,6 +27,7 @@ params.cpu            = "2"
 params.mem            = "20"
 params.output_folder  = "strelka_output"
 params.mode           = "somatic"
+params.AF             = null
 params.exome          = null
 params.rna            = null
 
@@ -70,6 +71,7 @@ if (params.help) {
     log.info "--cpu                  INTEGER              Number of cpu to use (default=2)"
     log.info "--output_folder        PATH                 Output directory for vcf files (default=strelka_ouptut)"
     log.info "--config               FILE                 Use custom configuration file"
+    log.info "--AF                                        get Allele frequency && Filter
     log.info "--exome                                     automatically set up parameters for exome data"
     log.info "--rna                                       automatically set up parameters for rna data"
     log.info ""
@@ -103,7 +105,7 @@ log.info "cpu           = ${params.cpu}"
 log.info "mem           = ${params.mem}Gb"
 log.info "output_folder = ${params.output_folder}"
 log.info "mode          = ${params.mode}"
-log.info "workflow      = ${workflow}"
+log.info "Allele Freq.  = ${params.AF}"
 log.info "exome         = ${params.exome}"
 log.info "rna           = ${params.rna}"
 log.info "config        = ${config}"
@@ -119,31 +121,51 @@ if (params.mode=="somatic"){
 
   process run_strelka {
 
-  publishDir params.output_folder, mode: 'move'
+     publishDir params.output_folder, mode: 'move'
 
-  input:
-  file pair from pairs
-  val workflow
-  val config
-  val exome
-  val rna
+     input:
+     file pair from pairs
+     val workflow
+     val config
+     val exome
+     val rna
 
-  output:
-  file 'strelkaAnalysis/results/variants/*' into vcffiles
+     output:
+     file 'strelkaAnalysis/results/variants/*vcf.gz' into vcffiles
+     file 'strelkaAnalysis/results/variants/*.tbi' into tbifiles
 
-  shell:
-  '''
-  !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis
-  cd strelkaAnalysis
-  ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
-  cd results/variants
-  mv somatic.indels.vcf.gz !{pair[0]}_vs_!{pair[2]}.somatic.indels.vcf.gz
-  mv somatic.snvs.vcf.gz !{pair[0]}_vs_!{pair[2]}.somatic.snvs.vcf.gz
-  mv somatic.indels.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.indels.vcf.gz.tbi
-  mv somatic.snvs.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.snvs.vcf.gz.tbi
-  '''
+     shell:
+     '''
+     !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis
+     cd strelkaAnalysis
+     ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
+     cd results/variants
+     mv somatic.indels.vcf.gz !{pair[0]}_vs_!{pair[2]}.somatic.indels.vcf.gz
+     mv somatic.snvs.vcf.gz !{pair[0]}_vs_!{pair[2]}.somatic.snvs.vcf.gz
+     mv somatic.indels.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.indels.vcf.gz.tbi
+     mv somatic.snvs.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.snvs.vcf.gz.tbi
+     '''
   }
+    
+  if (params.AF){
 
+      process getAllelicFraction{
+
+         publishDir params.output_folder, mode: 'copy'
+
+         input:
+         file vcf from vcffiles
+
+         output:
+         file '*.vcf' into passfiles
+
+         shell:
+         '''
+         getAllelicFraction !{vcf}
+         '''
+      }
+   }
+  
 }
 
 if (params.mode=="germline"){
