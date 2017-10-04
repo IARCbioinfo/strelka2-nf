@@ -121,7 +121,7 @@ if (params.mode=="somatic"){
 
   process run_strelka {
 
-     publishDir params.output_folder, mode: 'move'
+     publishDir params.output_folder, mode: 'copy'
 
      input:
      file pair from pairs
