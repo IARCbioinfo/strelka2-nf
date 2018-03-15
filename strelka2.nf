@@ -99,7 +99,7 @@ fasta_ref_fai = file( params.ref+'.fai' )
 
 exome="" ; if (params.exome) { exome="--exome" }
 rna=""; if (params.rna) { rna="--rna" }
-callRegions=""; if (params.callRegions) { bed = file( params.callRegions ) ; tbi = file( params.callRegions+'.tbi' ) ; callRegions="--callRegions "+ bed }
+callRegions=""; if (params.callRegions) { bed = file( params.callRegions ) ; tbi = file( params.callRegions+'.tbi' ) ; callRegions="--callRegions "+ bed.name }
 outputCallableRegions="" ; if (params.outputCallableRegions) { outputCallableRegions="--outputCallableRegions" }
 
 
