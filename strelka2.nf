@@ -17,19 +17,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-params.help           = null
-params.ref            = null
-params.tn_pairs       = null
-params.input_folder   = "./"
-params.strelka        = null
-params.config         = null
-params.cpu            = "2"
-params.mem            = "20"
-params.output_folder  = "strelka_output"
-params.mode           = "somatic"
-params.AF             = null
-params.exome          = null
-params.rna            = null
+params.help          		 = null
+params.ref           		 = null
+params.tn_pairs      		 = null
+params.input_folder  		 = "./"
+params.strelka        		= null
+params.config         		= null
+params.cpu            		= "2"
+params.mem           		 = "20"
+params.output_folder  		= "strelka_output"
+params.mode           		= "somatic"
+params.AF             		= null
+params.exome          		= null
+params.rna            		= null
+params.outputCallableRegions    = null
+params.callRegions    		= null
 
 log.info ""
 log.info "----------------------------------------------------------------"
@@ -74,6 +76,8 @@ if (params.help) {
     log.info "--AF                                        get Allele frequency and Filter"
     log.info "--exome                                     automatically set up parameters for exome data"
     log.info "--rna                                       automatically set up parameters for rna data"
+    log.info "--callRegions          PATH                 Region bed file"
+    log.info "--outputCallableRegions                     Create a BED track containing regions which are determined to be callable"
     log.info ""
     log.info "Flags:"
     log.info "--help                                      Display this message"
@@ -89,31 +93,36 @@ else { println "ERROR: wrong value for --mode option. Must be somatic or germlin
 
 if (params.config==null){ config = workflow + ".ini" } else {config=params.config}
 
-exome=""
-if (params.exome) { exome="--exome" }
-rna=""
-if (params.rna) { rna="--rna" }
-
-/* Software information */
-log.info ""
-log.info "ref           = ${params.ref}"
-log.info "tn_pairs      = ${params.tn_pairs}"
-log.info "input_folder  = ${params.input_folder}"
-log.info "strelka       = ${params.strelka}"
-log.info "config        = ${config}"
-log.info "cpu           = ${params.cpu}"
-log.info "mem           = ${params.mem}Gb"
-log.info "output_folder = ${params.output_folder}"
-log.info "mode          = ${params.mode}"
-log.info "Allele Freq.  = ${params.AF}"
-log.info "exome         = ${params.exome}"
-log.info "rna           = ${params.rna}"
-log.info "config        = ${config}"
-log.info ""
-}
 
 fasta_ref = file(params.ref)
 fasta_ref_fai = file( params.ref+'.fai' )
+
+exome="" ; if (params.exome) { exome="--exome" }
+rna=""; if (params.rna) { rna="--rna" }
+callRegions=""; if (params.callRegions) { bed = file( params.callRegions ) ; tbi = file( params.callRegions+'.tbi' ) ; callRegions="--callRegions "+ bed }
+outputCallableRegions="" ; if (params.outputCallableRegions) { outputCallableRegions="--outputCallableRegions" }
+
+
+/* Software information */
+log.info ""
+log.info "ref           	= ${params.ref}"
+log.info "tn_pairs      	= ${params.tn_pairs}"
+log.info "input_folder  	= ${params.input_folder}"
+log.info "strelka       	= ${params.strelka}"
+log.info "config        	= ${config}"
+log.info "cpu           	= ${params.cpu}"
+log.info "mem           	= ${params.mem}Gb"
+log.info "output_folder 	= ${params.output_folder}"
+log.info "mode          	= ${params.mode}"
+log.info "Allele Freq.  	= ${params.AF}"
+log.info "exome         	= ${params.exome}"
+log.info "rna           	= ${params.rna}"
+log.info "config     	  	= ${config}"
+log.info "callRegions   	= ${params.callRegions}"
+log.info "outputCallableRegions = ${outputCallableRegions}"
+log.info ""
+}
+
 if (params.mode=="somatic"){
 
   pairs = Channel.fromPath(params.tn_pairs).splitCsv(header: true, sep: '\t', strip: true)
@@ -125,6 +134,8 @@ if (params.mode=="somatic"){
 
      input:
      file pair from pairs
+     file bed
+     file tbi
      val workflow
      val config
      val exome
@@ -136,7 +147,7 @@ if (params.mode=="somatic"){
 
      shell:
      '''
-     !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis
+     !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
      cd strelkaAnalysis
      ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
      cd results/variants
@@ -195,7 +206,7 @@ if (params.mode=="germline"){
     shell:
     '''
     runDir="results/variants/"
-    !{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis
+    !{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
     cd strelkaAnalysis
     ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
     toto=`pwd`

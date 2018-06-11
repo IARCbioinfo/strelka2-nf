@@ -14,13 +14,18 @@
 	```
 
 #### Execution
-Nextflow seamlessly integrates with GitHub hosted code repositories:
 
 mode somatic
 `nextflow run iarcbioinfo/strelka2.nf --mode somatic --ref hg38.fa --tn_pairs pairs.txt --input_folder path/to/bam/ --strelka path/to/strelka/`
 
 mode germline
 `nextflow run iarcbioinfo/strelka2.nf --mode germline --ref hg38.fa --input_folder path/to/bam/ --strelka path/to/strelka/`
+
+#### Options
+--rna
+--exome
+--callRegions
+--outputCallableRegions
 
 #### Help section
 You can print the help manual by providing `--help` in the execution command line:
