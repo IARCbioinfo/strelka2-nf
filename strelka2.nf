@@ -132,6 +132,9 @@ if (params.mode=="somatic"){
 
   process run_strelka {
 
+     cpus params.cpu
+     memory params.mem+'GB' 
+      
      publishDir params.output_folder, mode: 'copy'
 
      input:
@@ -193,6 +196,9 @@ if (params.mode=="germline"){
 
   process run_strelka {
 
+     cpus params.cpu
+     memory params.mem+'GB' 
+      
     publishDir params.output_folder, mode: 'move'
 
     input:
