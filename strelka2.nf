@@ -90,9 +90,10 @@ workflow=""
 if(params.mode=="somatic") { workflow= params.strelka + '/bin/configureStrelkaSomaticWorkflow.py' }
 else if(params.mode=="germline"){ workflow= params.strelka + '/bin/configureStrelkaGermlineWorkflow.py' }
 else { println "ERROR: wrong value for --mode option. Must be somatic or germline"; System.exit(0) }
+workflow = file(workflow)
 
 if (params.config==null){ config = workflow + ".ini" } else {config=params.config}
-
+config = file(config)
 
 fasta_ref = file(params.ref)
 fasta_ref_fai = file( params.ref+'.fai' )
@@ -137,10 +138,10 @@ if (params.mode=="somatic"){
      file pair from pairs
      file bed
      file tbi
-     val workflow
-     val config
-     val exome
-     val rna
+     file fasta_ref
+     file fasta_ref_fai
+     file config
+     file workflow
 
      output:
      file 'strelkaAnalysis/results/variants/*vcf.gz' into vcffiles
@@ -148,9 +149,9 @@ if (params.mode=="somatic"){
 
      shell:
      callRegions=""
-     if (params.callRegions) { callRegions="--callRegions "+ $bed }
+     if (params.callRegions) { callRegions="--callRegions $bed" }
      '''
-     !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
+     ./!{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
      cd strelkaAnalysis
      ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
      cd results/variants
@@ -207,6 +208,8 @@ if (params.mode=="germline"){
     file 'strelkaAnalysis/results/variants/*' into vcffiles
 
     shell:
+    callRegions=""
+    if (params.callRegions) { callRegions="--callRegions $bed" }
     '''
     runDir="results/variants/"
     !{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
