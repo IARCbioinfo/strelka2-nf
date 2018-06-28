@@ -99,7 +99,8 @@ fasta_ref_fai = file( params.ref+'.fai' )
 
 exome="" ; if (params.exome) { exome="--exome" }
 rna=""; if (params.rna) { rna="--rna" }
-callRegions=""; if (params.callRegions) { bed = file( params.callRegions ) ; tbi = file( params.callRegions+'.tbi' ) ; callRegions="--callRegions "+ bed }
+bed = file( params.callRegions ) 
+tbi = file( params.callRegions+'.tbi' )
 outputCallableRegions="" ; if (params.outputCallableRegions) { outputCallableRegions="--outputCallableRegions" }
 
 
@@ -146,6 +147,8 @@ if (params.mode=="somatic"){
      file 'strelkaAnalysis/results/variants/*.tbi' into tbifiles
 
      shell:
+     callRegions=""
+     if (params.callRegions) { callRegions="--callRegions "+ $bed }
      '''
      !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
      cd strelkaAnalysis
