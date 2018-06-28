@@ -31,7 +31,7 @@ params.AF             		= null
 params.exome          		= null
 params.rna            		= null
 params.outputCallableRegions    = null
-params.callRegions    		= null
+params.callRegions    		= "NO_FILE"
 
 log.info ""
 log.info "----------------------------------------------------------------"
@@ -148,8 +148,7 @@ if (params.mode=="somatic"){
      file 'strelkaAnalysis/results/variants/*.tbi' into tbifiles
 
      shell:
-     callRegions=""
-     if (params.callRegions) { callRegions="--callRegions $bed" }
+     if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
      '''
      ./!{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
      cd strelkaAnalysis
@@ -208,8 +207,7 @@ if (params.mode=="germline"){
     file 'strelkaAnalysis/results/variants/*' into vcffiles
 
     shell:
-    callRegions=""
-    if (params.callRegions) { callRegions="--callRegions $bed" }
+    if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
     '''
     runDir="results/variants/"
     !{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
