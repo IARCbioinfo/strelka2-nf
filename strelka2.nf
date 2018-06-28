@@ -198,10 +198,12 @@ if (params.mode=="germline"){
     input:
     val bamFiles
     val bamInput
-    val workflow
-    val config
-    val exome
-    val rna
+    file workflow
+    file config
+    file bed
+    file tbi 
+    file fasta_ref
+    file fasta_ref_fai
     
     output:
     file 'strelkaAnalysis/results/variants/*' into vcffiles
@@ -210,11 +212,9 @@ if (params.mode=="germline"){
     if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
     '''
     runDir="results/variants/"
-    !{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
+    ./!{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
     cd strelkaAnalysis
     ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
-    toto=`pwd`
-    echo $toto
     array=(!{bamFiles})
     for i in ${!array[@]}; do mv $runDir/genome.S$((${i}+1)).vcf.gz $runDir/$(basename ${array[$i]/.bam}).genome.S$((${i}+1)).vcf.gz; done
     for i in ${!array[@]}; do mv $runDir/genome.S$((${i}+1)).vcf.gz.tbi $runDir/$(basename ${array[$i]/.bam}).genome.S$((${i}+1)).vcf.gz.tbi; done
