@@ -21,7 +21,7 @@ params.help          		 = null
 params.ref           		 = null
 params.tn_pairs      		 = null
 params.input_folder  		 = "./"
-params.strelka        		= null
+params.strelka        		= "/home/cahaisv/miniconda3/pkgs/strelka-2.9.7-0/share/strelka-2.9.7-0/"
 params.config         		= null
 params.cpu            		= "2"
 params.mem           		 = "20"
@@ -65,13 +65,13 @@ if (params.help) {
     log.info ""
     log.info "Mandatory arguments:"
     log.info "--ref                  FILE                 Genome reference file"
-    log.info "--strelka              PATH                 Strelka installation dir"
     log.info "--input_folder         FOLDER               Folder containing BAM files"
     log.info ""
     log.info "--------------------------------------------------------"
     log.info "Optional arguments:"
     log.info "--cpu                  INTEGER              Number of cpu to use (default=2)"
     log.info "--output_folder        PATH                 Output directory for vcf files (default=strelka_ouptut)"
+    log.info "--strelka              PATH                 Strelka installation dir"
     log.info "--config               FILE                 Use custom configuration file"
     log.info "--AF                                        get Allele frequency and Filter"
     log.info "--exome                                     automatically set up parameters for exome data"
@@ -90,7 +90,6 @@ workflow=""
 if(params.mode=="somatic") { workflow= params.strelka + '/bin/configureStrelkaSomaticWorkflow.py' }
 else if(params.mode=="germline"){ workflow= params.strelka + '/bin/configureStrelkaGermlineWorkflow.py' }
 else { println "ERROR: wrong value for --mode option. Must be somatic or germline"; System.exit(0) }
-workflow = file(workflow)
 
 if (params.config==null){ config = workflow + ".ini" } else {config=params.config}
 config = file(config)
@@ -103,7 +102,6 @@ rna=""; if (params.rna) { rna="--rna" }
 bed = file( params.callRegions ) 
 tbi = file( params.callRegions+'.tbi' )
 outputCallableRegions="" ; if (params.outputCallableRegions) { outputCallableRegions="--outputCallableRegions" }
-
 
 /* Software information */
 log.info ""
@@ -125,6 +123,7 @@ log.info "outputCallableRegions = ${outputCallableRegions}"
 log.info ""
 }
 
+
 if (params.mode=="somatic"){
 
   pairs = Channel.fromPath(params.tn_pairs).splitCsv(header: true, sep: '\t', strip: true)
@@ -144,7 +143,6 @@ if (params.mode=="somatic"){
      file fasta_ref
      file fasta_ref_fai
      file config
-     file workflow
 
      output:
      file 'strelkaAnalysis/results/variants/*vcf.gz' into vcffiles
@@ -153,7 +151,7 @@ if (params.mode=="somatic"){
      shell:
      if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
      '''
-     ./!{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
+     !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
      cd strelkaAnalysis
      ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
      cd results/variants
@@ -178,33 +176,28 @@ if (params.mode=="somatic"){
 
          shell:
          '''
-         getAllelicFraction !{vcf}
+         getAllelicFraction
          '''
       }
    }
   
 }
 
+
 if (params.mode=="germline"){
 
-
-  bamFiles=""
-  Channel.fromPath( params.input_folder + '/*.bam').subscribe { bamFiles = bamFiles + "$it " }
-
-  bamInput=""
-  Channel.fromPath( params.input_folder + '/*.bam').subscribe { bamInput = bamInput + "--bam $it " }
+  /*bamFiles = Channel.fromFilePairs( params.input_folder + '/*.{bam,bai}') { file -> file.name.replaceAll(/.bam|.bai/,'') }*/
+  bamFiles = Channel.fromFilePairs( params.input_folder + '/*.{bam,bam.bai}')
 
   process run_strelka {
 
-     cpus params.cpu
-     memory params.mem+'GB' 
+    cpus params.cpu
+    memory params.mem+'GB'
       
-    publishDir params.output_folder, mode: 'move'
+    publishDir params.output_folder, mode: 'copy'
 
     input:
-    val bamFiles
-    val bamInput
-    file workflow
+    set sample_Id, file(bam) from bamFiles
     file config
     file bed
     file tbi 
@@ -218,14 +211,35 @@ if (params.mode=="germline"){
     if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
     '''
     runDir="results/variants/"
-    ./!{workflow} !{bamInput} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
+    !{workflow} --bam !{sample_Id}.bam --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions}
     cd strelkaAnalysis
     ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
-    array=(!{bamFiles})
-    for i in ${!array[@]}; do mv $runDir/genome.S$((${i}+1)).vcf.gz $runDir/$(basename ${array[$i]/.bam}).genome.S$((${i}+1)).vcf.gz; done
-    for i in ${!array[@]}; do mv $runDir/genome.S$((${i}+1)).vcf.gz.tbi $runDir/$(basename ${array[$i]/.bam}).genome.S$((${i}+1)).vcf.gz.tbi; done
+    mv $runDir/genome.vcf.gz $runDir/!{sample_Id}.germline.vcf.gz
+    mv $runDir/genome.vcf.gz.tbi $runDir/!{sample_Id}.germline.vcf.gz.tbi
     '''
   }
+
+  if (params.AF){
+
+      process getAllelicFraction{
+
+         publishDir params.output_folder, mode: 'copy'
+
+         input:
+         file vcf from vcffiles
+
+         output:
+         file '*.vcf' into passfiles
+
+         shell:
+         '''
+         getAllelicFraction 
+         '''
+      }
+  }
+
+
+
 
 }
 
