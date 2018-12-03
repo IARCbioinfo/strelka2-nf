@@ -1,0 +1,101 @@
+#!/usr/bin/env Rscript
+library(data.table)
+
+somatic<-list.files(pattern="*somatic.snvs.vcf.gz$")
+germline<-list.files(pattern="*germline.vcf.gz$")
+
+#germline
+print("germline")
+for (file in germline){
+	print(file)
+
+	vcf<-fread(cmd=paste0("zcat ", file), skip="CHROM")
+	vcf<-vcf[vcf$FILTER=="PASS" & ALT!="."]
+
+	T<-colnames(vcf)[10] # name of sample
+
+	if (nrow(vcf)>0){
+		vcf[ ALT!="."  ,  COV :=  tstrsplit( tstrsplit(get(T),":")[4][[1]], "," )  ]
+
+		#snvs
+		vcf[ grep("SB", vcf$FORMAT)  ,  AF_REF:=  tstrsplit( tstrsplit(get(T),":")[6][[1]], "," )[1]  ]
+		vcf[ grep("SB", vcf$FORMAT)  ,  AF_ALT:=  tstrsplit( tstrsplit(get(T),":")[6][[1]], "," )[2]  ]
+
+		#indel
+		vcf[ grep("DPI", vcf$FORMAT), AF_REF:=  tstrsplit( tstrsplit(get(T),":")[5][[1]], "," )[1] ]
+		vcf[ grep("DPI", vcf$FORMAT), AF_ALT:=  tstrsplit( tstrsplit(get(T),":")[5][[1]], "," )[2] ]
+
+		vcf$AF_REF<-as.numeric(vcf$AF_REF)/as.numeric(vcf$COV)
+		vcf$AF_ALT<-as.numeric(vcf$AF_ALT)/as.numeric(vcf$COV)
+	}
+
+        filename<-gsub("_L00.","",file)
+	filename<-gsub("vcf.gz","vcf",filename)
+	write.table(vcf, file=filename , sep="\t", row.names=F, quote=F)
+}
+
+
+#somatic
+print("somatic")
+for (file in somatic){
+	print(file)
+	
+	vcf<-fread(cmd=paste0("zcat ", file), skip="CHROM")
+	vcf<-vcf[vcf$FILTER=="PASS" & ALT!="."]
+
+	dict<-list( "A"=5, "C"=6, "G"=7, "T"=8 )
+	tmp=vcf
+
+	#snvs
+	if(nrow(vcf)>0){
+		vcf[  ,  dict:=dict[ ALT ] ]
+		vcf$dict<-as.numeric(vcf$dict)
+
+		vcf[  ,  COV_N :=  tstrsplit( tstrsplit(NORMAL,":")[1][[1]], "," ) ]
+		vcf[  ,  COV_T :=  tstrsplit( tstrsplit(TUMOR, ":")[1][[1]], "," ) ]
+		#vcf[  ,  AF_N  :=sub(",.*","",tstrsplit(NORMAL,":")[ as.numeric(vcf$dict_N) ][[1]])  ]
+		#vcf[  ,  AF_T  :=sub(",.*","",tstrsplit(TUMOR,":")[ as.numeric(vcf$dict_T) ][[1]])  ]
+		vcf[  ,  AF_N  :=sapply( 1:nrow(vcf), function(x) { sub(",.*","",strsplit(vcf$NORMAL[x],":")[[1]][vcf$dict[x]]) } ) ]
+		vcf[  ,  AF_T  :=sapply( 1:nrow(vcf), function(x) { sub(",.*","",strsplit(vcf$TUMOR[x],":")[[1]][vcf$dict[x]]) } ) ]
+
+		vcf$COV_N<-as.numeric(vcf$COV_N)	
+		vcf$COV_T<-as.numeric(vcf$COV_T)
+		vcf$AF_N<-as.numeric(vcf$AF_N)
+		vcf$AF_T<-as.numeric(vcf$AF_T)
+	
+		vcf$AF_N<-vcf$AF_N/vcf$COV_N
+		vcf$AF_T<-vcf$AF_T/vcf$COV_T
+
+		tmp<-vcf[ , -c("dict")]
+	}
+
+	#indels
+	print(sub("snvs","indels",file))
+	vcf<-fread(cmd=paste0("zcat ", sub("snvs","indels",file)), skip="CHROM")
+	vcf<-vcf[vcf$FILTER=="PASS" & ALT!="."]
+
+	if(nrow(vcf)>0){
+		vcf[  ,  COV_N :=  tstrsplit( tstrsplit(NORMAL,":")[1][[1]], "," ) ]
+		vcf[  ,  COV_T :=  tstrsplit( tstrsplit(TUMOR, ":")[1][[1]], "," ) ]
+		#vcf[  ,  AF_N  :=sub(",.*","",tstrsplit(NORMAL,":")[4][[1]])  ]
+		#vcf[  ,  AF_T  :=sub(",.*","",tstrsplit(TUMOR,":")[4][[1]])  ]
+		vcf[  ,  AF_N  :=sapply( 1:nrow(vcf), function(x) { sub(",.*","",strsplit(vcf$NORMAL[x],":")[[1]][4]) } ) ]
+		vcf[  ,  AF_T  :=sapply( 1:nrow(vcf), function(x) { sub(",.*","",strsplit(vcf$TUMOR[x],":")[[1]][4]) } ) ]
+
+		vcf$COV_N<-as.numeric(vcf$COV_N)
+		vcf$COV_T<-as.numeric(vcf$COV_T)
+		vcf$AF_N<-as.numeric(vcf$AF_N)
+		vcf$AF_T<-as.numeric(vcf$AF_T)
+
+		vcf$AF_N<-vcf$AF_N/vcf$COV_N
+		vcf$AF_T<-vcf$AF_T/vcf$COV_T
+	}
+
+	if (ncol(tmp)==15 & ncol(vcf)==15){ vcf<-rbind(tmp,vcf) }
+	if (ncol(tmp)==15 & ncol(vcf)<15){ vcf <-tmp }
+
+	filename<-gsub("_L00..bam","",file)
+	filename<-gsub("snvs.vcf.gz","vcf",filename)
+	write.table(vcf, file=filename , sep="\t", row.names=F, quote=F)
+}
+
