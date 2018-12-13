@@ -147,7 +147,7 @@ if (params.mode=="somatic"){
      output:
      file 'strelkaAnalysis/results/variants/*vcf.gz' into vcffiles
      file 'strelkaAnalysis/results/variants/*.tbi' into tbifiles
-     file 'strelkaAnalysis/results/regions/*.bed' into regionfiles
+     file 'strelkaAnalysis/results/regions/*.bed.gz' into regionfiles
      file 'strelkaAnalysis/results/regions/*.tbi' into regiontbifiles
 
      shell:
@@ -162,8 +162,8 @@ if (params.mode=="somatic"){
      mv somatic.indels.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.indels.vcf.gz.tbi
      mv somatic.snvs.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.snvs.vcf.gz.tbi
      cd ../regions
-     mv somatic.callable.regions.bed !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz
-     mv somatic.callable.regions.bed.tbi !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz.tbi
+     mv somatic.callable.regions.bed.gz !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz
+     mv somatic.callable.regions.bed.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz.tbi
      '''
   }
     
