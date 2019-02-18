@@ -21,7 +21,7 @@ params.help          		 = null
 params.ref           		 = null
 params.tn_pairs      		 = null
 params.input_folder  		 = "./"
-params.strelka        		= "/home/cahaisv/miniconda3/pkgs/strelka-2.9.7-0/share/strelka-2.9.7-0/"
+params.strelka        		= "~/miniconda3/pkgs/strelka-2.9.7-0/share/strelka-2.9.7-0/"
 params.config         		= null
 params.cpu            		= "2"
 params.mem           		 = "20"
@@ -147,8 +147,8 @@ if (params.mode=="somatic"){
      output:
      file 'strelkaAnalysis/results/variants/*vcf.gz' into vcffiles
      file 'strelkaAnalysis/results/variants/*.tbi' into tbifiles
-     file 'strelkaAnalysis/results/regions/*.bed.gz' into regionfiles
-     file 'strelkaAnalysis/results/regions/*.tbi' into regiontbifiles
+     file 'strelkaAnalysis/results/regions/*.bed.gz' optional true into regionfiles
+     file 'strelkaAnalysis/results/regions/*.tbi' optional true into regiontbifiles
 
      shell:
      if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
