@@ -57,3 +57,13 @@ profiles {
                 }
         }
 ```
+
+variants.vcf.gz
+
+## Output
+  | Type      | Description     |
+  |-----------|---------------|
+  | strelkaAnalysis/results/variants/\*.vcf.gz    | VCF files |
+  | filtered/\*PASS.vcf.gz    | VCF files with only variants with PASS flag |
+  
+  All vcf files have companion tabix index files (.tbi). Note that in germline mode, the VCF outputted corresponds to variants only (file variants.vcf.gz from strelka). 
