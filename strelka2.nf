@@ -27,7 +27,6 @@ params.cpu            		= "2"
 params.mem           		 = "20"
 params.output_folder  		= "strelka_output"
 params.mode           		= "somatic"
-params.AF             		= null
 params.exome          		= null
 params.rna            		= null
 params.outputCallableRegions    = null
@@ -36,7 +35,11 @@ params.suffix                   = ".PASS"
 
 log.info ""
 log.info "----------------------------------------------------------------"
+<<<<<<< HEAD
 log.info "  Strelka2 1.1 : variant calling with Strelka2 using nextflow "
+=======
+log.info "  Strelka2 1.0.1 : variant calling with Strelka2 with nextflow "
+>>>>>>> upstream/dev
 log.info "----------------------------------------------------------------"
 log.info "Copyright (C) IARC/WHO"
 log.info "This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE"
@@ -74,7 +77,6 @@ if (params.help) {
     log.info "--output_folder        PATH                 Output directory for vcf files (default=strelka_ouptut)"
     log.info "--strelka              PATH                 Strelka installation dir"
     log.info "--config               FILE                 Use custom configuration file"
-    log.info "--AF                                        get Allele frequency and Filter"
     log.info "--exome                                     automatically set up parameters for exome data"
     log.info "--rna                                       automatically set up parameters for rna data"
     log.info "--callRegions          PATH                 Region bed file"
@@ -115,7 +117,6 @@ log.info "cpu           	= ${params.cpu}"
 log.info "mem           	= ${params.mem}Gb"
 log.info "output_folder 	= ${params.output_folder}"
 log.info "mode          	= ${params.mode}"
-log.info "Allele Freq.  	= ${params.AF}"
 log.info "exome         	= ${params.exome}"
 log.info "rna           	= ${params.rna}"
 log.info "config     	  	= ${config}"
@@ -227,10 +228,15 @@ if (params.mode=="somatic"){
      file config
 
      output:
+<<<<<<< HEAD
      file 'strelkaAnalysis/results/variants/*vcf.gz' into vcffiles
      file 'strelkaAnalysis/results/variants/*.tbi' into tbifiles
      file 'strelkaAnalysis/results/regions/*.bed.gz' optional true into regionfiles
      file 'strelkaAnalysis/results/regions/*.tbi' optional true into regiontbifiles
+=======
+     file '*vcf.gz' into vcffiles
+     file '*bed.gz' into regionfiles
+>>>>>>> upstream/dev
 
      shell:
      if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
@@ -238,17 +244,20 @@ if (params.mode=="somatic"){
      !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
      cd strelkaAnalysis
      ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
-     cd results/variants
+     cd ..
+     mv strelkaAnalysis/results/variants/* .
      mv somatic.indels.vcf.gz !{pair[0]}_vs_!{pair[2]}.somatic.indels.vcf.gz
      mv somatic.snvs.vcf.gz !{pair[0]}_vs_!{pair[2]}.somatic.snvs.vcf.gz
      mv somatic.indels.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.indels.vcf.gz.tbi
      mv somatic.snvs.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.snvs.vcf.gz.tbi
-     cd ../regions
+     fixStrelkaOutput.sh *.vcf.gz
+     mv strelkaAnalysis/results/regions/* .
      mv somatic.callable.regions.bed.gz !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz
      mv somatic.callable.regions.bed.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz.tbi
      '''
   }
     
+<<<<<<< HEAD
   if (params.AF){
       process getAllelicFractionSomatic{
 
@@ -267,10 +276,16 @@ if (params.mode=="somatic"){
       }
    }
   
+=======
+>>>>>>> upstream/dev
 }
 
 
 if (params.mode=="germline"){
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/dev
   bamFiles = Channel.fromFilePairs( params.input_folder + '/*.{bam,bam.bai}')
 
   process run_strelkaGermline {
@@ -290,15 +305,19 @@ if (params.mode=="germline"){
     file fasta_ref_fai
     
     output:
+<<<<<<< HEAD
     file 'strelkaAnalysis/results/variants/*.germline.vcf.gz*' into vcffiles
+=======
+    file '*vcf.gz' into vcffiles
+>>>>>>> upstream/dev
 
     shell:
     if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
     '''
-    runDir="results/variants/"
     !{workflow} --bam !{sample_Id}.bam --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions}
     cd strelkaAnalysis
     ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
+<<<<<<< HEAD
     mv $runDir/variants.vcf.gz $runDir/!{sample_Id}.germline.vcf.gz
     mv $runDir/variants.vcf.gz.tbi $runDir/!{sample_Id}.germline.vcf.gz.tbi
     '''
@@ -334,6 +353,16 @@ process filter_pass{
 
    input:
    file vcf from vcffiles2
+=======
+    cd ..
+    mv strelkaAnalysis/results/variants/* .
+    mv genome.vcf.gz !{sample_Id}.germline.vcf.gz
+    mv genome.vcf.gz.tbi !{sample_Id}.germline.vcf.gz.tbi
+    '''
+  }
+
+}
+>>>>>>> upstream/dev
 
    output:
    file '*_PASS.vcf.gz' into filtered
