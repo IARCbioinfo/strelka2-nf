@@ -1,0 +1,35 @@
+version: 2.1
+#orbs:
+#  singularity: singularity/singularity@1.0.10
+
+jobs:
+  build:
+        machine: true
+        steps:
+                - checkout
+                - run: sudo apt-get install graphviz
+                - run: cd ~ ; wget -qO- get.nextflow.io | bash ; chmod 755 nextflow ; sudo ln -s ~/nextflow /usr/local/bin/ 
+                - run: echo " docker.runOptions = '-u $(id -u):$(id -g)' " > ~/.nextflow/config
+                - run: cd ~/project/ ; docker build -t iarcbioinfo/strelka2-nf .
+                #; sudo apt-get install libarchive-dev
+#                - run: sudo rm -rf /usr/local/go
+#                - run: cd ~ ; export VERSION=1.13 OS=linux ARCH=amd64; wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz; sudo tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz ; rm go$VERSION.$OS-$ARCH.tar.gz; sudo ln -s /usr/local/go/bin/go /usr/local/bin/
+#                - run: which go; go version; go env
+#                - run: cd ~ ; VERSION=3.6.0; wget https://github.com/sylabs/singularity/releases/download/v${VERSION}/singularity-${VERSION}.tar.gz; tar -xzf singularity-${VERSION}.tar.gz; cd singularity; ./mconfig; make -C builddir; sudo make -C builddir install                         
+#                - run: cd ~ ; singularity pull ...
+                - run: cd ~ && git clone https://github.com/iarcbioinfo/data_test.git
+                - run: cd ; nextflow run ~/project/ --help
+                - run: cd ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --input_folder ~/data_test/BAM/ --mode germline --output_folder strelka2-germline-results --ref ~/data_test/REF/17.fasta --cpu 2 --mem 4 -with-dag dag.html
+                - run: cd ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --input_folder ~/data_test/BAM/ --mode germline --output_folder strelka2-germline-results --ref ~/data_test/REF/17.fasta --cpu 2 --mem 4 -with-dag dag.png -resume
+                - run: cd ; cp ~/dag.* ~/project/.
+                - add_ssh_keys:
+                                fingerprints:
+                                        - "ee:96:12:b3:06:55:ca:68:07:20:cc:77:75:62:04:f1"
+                - deploy:
+                        branch: [master, dev]
+                        command: chmod +x deploy.sh && ./deploy.sh
+
+workflows:
+  install_s_build_and_test:
+    jobs:
+      - build

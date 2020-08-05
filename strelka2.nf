@@ -36,7 +36,7 @@ params.suffix                   = ".PASS"
 
 log.info ""
 log.info "----------------------------------------------------------------"
-log.info "  Strelka2 1.0.1 : variant calling with Strelka2 with nextflow "
+log.info "  Strelka2 1.1 : variant calling with Strelka2 using nextflow "
 log.info "----------------------------------------------------------------"
 log.info "Copyright (C) IARC/WHO"
 log.info "This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE"
@@ -133,7 +133,6 @@ if(params.mode=="genotyping"){
 			
 	pairs2genotype = pairs.groupTuple(by: 0)
 			      .map { row -> tuple(row[0] , row[1], row[2] , row[3][0] , row[4][0] ,  row[5],row[6],row[7],row[8]  ) }
-	//			.subscribe { row -> println "${row}" }
 
 	
  process run_strelkaSomaticGenotyping {
@@ -204,9 +203,6 @@ if(params.mode=="genotyping"){
      mv strelkaAnalysis strelkaAnalysis_T2
      '''
   }
-
-//#--forcedGT 
-
 
 }else{
 
