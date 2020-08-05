@@ -1,7 +1,5 @@
 #! /usr/bin/env nextflow
 
-/*vim: syntax=groovy -*- mode: groovy;-*- */
-
 // Copyright (C) 2017 IARC/WHO
 
 // This program is free software: you can redistribute it and/or modify
@@ -35,11 +33,7 @@ params.suffix                   = ".PASS"
 
 log.info ""
 log.info "----------------------------------------------------------------"
-<<<<<<< HEAD
 log.info "  Strelka2 1.1 : variant calling with Strelka2 using nextflow "
-=======
-log.info "  Strelka2 1.0.1 : variant calling with Strelka2 with nextflow "
->>>>>>> upstream/dev
 log.info "----------------------------------------------------------------"
 log.info "Copyright (C) IARC/WHO"
 log.info "This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE"
@@ -228,15 +222,10 @@ if (params.mode=="somatic"){
      file config
 
      output:
-<<<<<<< HEAD
      file 'strelkaAnalysis/results/variants/*vcf.gz' into vcffiles
      file 'strelkaAnalysis/results/variants/*.tbi' into tbifiles
      file 'strelkaAnalysis/results/regions/*.bed.gz' optional true into regionfiles
      file 'strelkaAnalysis/results/regions/*.tbi' optional true into regiontbifiles
-=======
-     file '*vcf.gz' into vcffiles
-     file '*bed.gz' into regionfiles
->>>>>>> upstream/dev
 
      shell:
      if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
@@ -257,7 +246,6 @@ if (params.mode=="somatic"){
      '''
   }
     
-<<<<<<< HEAD
   if (params.AF){
       process getAllelicFractionSomatic{
 
@@ -274,18 +262,11 @@ if (params.mode=="somatic"){
          getAllelicFraction
          '''
       }
-   }
-  
-=======
->>>>>>> upstream/dev
+   } 
 }
 
 
 if (params.mode=="germline"){
-<<<<<<< HEAD
-=======
-
->>>>>>> upstream/dev
   bamFiles = Channel.fromFilePairs( params.input_folder + '/*.{bam,bam.bai}')
 
   process run_strelkaGermline {
@@ -305,11 +286,7 @@ if (params.mode=="germline"){
     file fasta_ref_fai
     
     output:
-<<<<<<< HEAD
     file 'strelkaAnalysis/results/variants/*.germline.vcf.gz*' into vcffiles
-=======
-    file '*vcf.gz' into vcffiles
->>>>>>> upstream/dev
 
     shell:
     if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
@@ -317,7 +294,6 @@ if (params.mode=="germline"){
     !{workflow} --bam !{sample_Id}.bam --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions}
     cd strelkaAnalysis
     ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
-<<<<<<< HEAD
     mv $runDir/variants.vcf.gz $runDir/!{sample_Id}.germline.vcf.gz
     mv $runDir/variants.vcf.gz.tbi $runDir/!{sample_Id}.germline.vcf.gz.tbi
     '''
@@ -353,16 +329,6 @@ process filter_pass{
 
    input:
    file vcf from vcffiles2
-=======
-    cd ..
-    mv strelkaAnalysis/results/variants/* .
-    mv genome.vcf.gz !{sample_Id}.germline.vcf.gz
-    mv genome.vcf.gz.tbi !{sample_Id}.germline.vcf.gz.tbi
-    '''
-  }
-
-}
->>>>>>> upstream/dev
 
    output:
    file '*_PASS.vcf.gz' into filtered
