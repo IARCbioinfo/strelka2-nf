@@ -36,7 +36,7 @@ params.suffix                   = ".PASS"
 
 log.info ""
 log.info "----------------------------------------------------------------"
-log.info "  Strelka2 1.0.1 : variant calling with Strelka2 iwith nextflow "
+log.info "  Strelka2 1.0.1 : variant calling with Strelka2 with nextflow "
 log.info "----------------------------------------------------------------"
 log.info "Copyright (C) IARC/WHO"
 log.info "This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE"
@@ -56,7 +56,6 @@ if (params.help) {
     log.info ""
     log.info "Mandatory arguments:"
     log.info "--ref                  FILE                 Genome reference file"
-    log.info "--strelka              PATH                 Strelka installation dir"
     log.info "--input_folder         FOLDER               Folder containing BAM files"
     log.info "--tn_pairs             FILE                 Tab delimited text file with two columns called normal and tumor"
     log.info ""
@@ -71,6 +70,7 @@ if (params.help) {
     log.info "--------------------------------------------------------"
     log.info "Optional arguments:"
     log.info "--cpu                  INTEGER              Number of cpu to use (default=2)"
+    log.info "--mem                  INTEGER              Memory (in GB)"
     log.info "--output_folder        PATH                 Output directory for vcf files (default=strelka_ouptut)"
     log.info "--strelka              PATH                 Strelka installation dir"
     log.info "--config               FILE                 Use custom configuration file"
@@ -83,7 +83,7 @@ if (params.help) {
     log.info "Flags:"
     log.info "--help                                      Display this message"
     log.info ""
-    exit 1
+    exit 0
 } else {
 
 
@@ -275,7 +275,6 @@ if (params.mode=="somatic"){
 
 
 if (params.mode=="germline"){
-  /*bamFiles = Channel.fromFilePairs( params.input_folder + '/*.{bam,bai}') { file -> file.name.replaceAll(/.bam|.bai/,'') }*/
   bamFiles = Channel.fromFilePairs( params.input_folder + '/*.{bam,bam.bai}')
 
   process run_strelkaGermline {
@@ -333,7 +332,7 @@ if (params.mode=="germline"){
 
 process filter_pass{
    cpus 1
-   memory '6GB'
+   memory '1GB'
 
    publishDir params.output_folder+"/filtered/", mode: 'copy'
 
