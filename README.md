@@ -1,5 +1,8 @@
 # strelka2-nf
 ### Strelka v2 pipeline with Nextflow
+[![CircleCI](https://circleci.com/gh/IARCbioinfo/strelka2-nf/tree/master.svg?style=svg)](https://circleci.com/gh/IARCbioinfo/strelka2-nf/tree/master)
+[![Docker Hub](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/repository/docker/iarcbioinfo/strelka2-nf)
+[![https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg](https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg)](https://singularity-hub.org/collections/4622)
 
 #### Dependencies
 1. Install [Strelka v2](https://github.com/Illumina/strelka).
@@ -57,3 +60,13 @@ profiles {
                 }
         }
 ```
+
+variants.vcf.gz
+
+## Output
+  | Type      | Description     |
+  |-----------|---------------|
+  | strelkaAnalysis/results/variants/\*.vcf.gz    | VCF files |
+  | filtered/\*PASS.vcf.gz    | VCF files with only variants with PASS flag |
+  
+  All vcf files have companion tabix index files (.tbi). Note that in germline mode, the VCF outputted corresponds to variants only (file variants.vcf.gz from strelka). 
