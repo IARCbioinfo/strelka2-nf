@@ -19,7 +19,7 @@ params.help          		= null
 params.ref           		= null
 params.tn_pairs      		= null
 params.input_folder  		= "./"
-params.strelka        		= "$CONDA_PREFIX/share/strelka-2.9.10-0/"
+params.strelka        		= "/opt/conda/envs/strelka2-nf/share/strelka-2.9.10-0/"
 params.config         		= null
 params.cpu            		= "2"
 params.mem           		= "20"
@@ -70,7 +70,7 @@ if (params.help) {
     log.info "--cpu                  INTEGER              Number of cpu to use (default=2)"
     log.info "--mem                  INTEGER              Memory (in GB)"
     log.info "--output_folder        PATH                 Output directory for vcf files (default=strelka_ouptut)"
-    log.info "--strelka              PATH                 Strelka installation dir"
+    log.info "--strelka              PATH                 Strelka installation dir (default: path inside docker and singularity containers)"
     log.info "--config               FILE                 Use custom configuration file"
     log.info "--exome                                     automatically set up parameters for exome data"
     log.info "--rna                                       automatically set up parameters for rna data"
