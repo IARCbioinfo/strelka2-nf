@@ -15,21 +15,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-params.help          		 = null
-params.ref           		 = null
-params.tn_pairs      		 = null
-params.input_folder  		 = "./"
+params.help          		= null
+params.ref           		= null
+params.tn_pairs      		= null
+params.input_folder  		= "./"
 params.strelka        		= "$CONDA_PREFIX/share/strelka-2.9.10-0/"
 params.config         		= null
 params.cpu            		= "2"
-params.mem           		 = "20"
+params.mem           		= "20"
 params.output_folder  		= "strelka_output"
 params.mode           		= "somatic"
 params.exome          		= null
 params.rna            		= null
 params.outputCallableRegions    = null
 params.callRegions    		= "NO_FILE"
-params.suffix                   = ".PASS"
+params.AF            		= null
+params.suffix              = ".PASS"
 
 log.info ""
 log.info "----------------------------------------------------------------"
@@ -293,8 +294,8 @@ if (params.mode=="germline"){
     !{workflow} --bam !{sample_Id}.bam --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions}
     cd strelkaAnalysis
     ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
-    mv $runDir/variants.vcf.gz $runDir/!{sample_Id}.germline.vcf.gz
-    mv $runDir/variants.vcf.gz.tbi $runDir/!{sample_Id}.germline.vcf.gz.tbi
+    mv results/variants/variants.vcf.gz results/variants/!{sample_Id}.germline.vcf.gz
+    mv results/variants/variants.vcf.gz.tbi results/variants/!{sample_Id}.germline.vcf.gz.tbi
     '''
   }
 
