@@ -22,4 +22,4 @@ MAINTAINER **nalcala** <**alcalan@iarc.fr**>
 COPY environment.yml /
 RUN apt-get update && apt-get install -y procps && apt-get clean -y
 RUN conda env create -n strelka2-nf -f /environment.yml && conda clean -a
-ENV PATH /opt/conda/envs/strelka2-nf/bin:$PATH
+ENV PATH /opt/conda/envs/strelka2-nf/bin:/opt/conda/envs/strelka2-nf/share/strelka-2.9.10-0/bin:$PATH
