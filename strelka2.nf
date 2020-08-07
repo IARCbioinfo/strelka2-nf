@@ -79,6 +79,7 @@ if (params.help) {
     log.info "--exome                                     automatically set up parameters for exome data"
     log.info "--rna                                       automatically set up parameters for rna data"
     log.info "--outputCallableRegions                     Create a BED track containing regions which are determined to be callable"
+    log.info "--AF                                        Get allelic fractions"
     log.info "--help                                      Display this message"
     log.info ""
     exit 0
@@ -115,7 +116,6 @@ log.info "output_folder 	= ${params.output_folder}"
 log.info "mode          	= ${params.mode}"
 log.info "exome         	= ${params.exome}"
 log.info "rna           	= ${params.rna}"
-log.info "config     	  	= ${config}"
 log.info "callRegions   	= ${params.callRegions}"
 log.info "outputCallableRegions = ${outputCallableRegions}"
 log.info ""
@@ -145,7 +145,6 @@ if(params.mode=="genotyping"){
      file tbi
      file fasta_ref
      file fasta_ref_fai
-     //file config
 
      output:
      file 'strelkaAnalysis_T1/results/variants/*vcf.gz'
@@ -220,7 +219,6 @@ if (params.mode=="somatic"){
      file tbi
      file fasta_ref
      file fasta_ref_fai
-     //file config
 
      output:
      file 'strelkaAnalysis/results/variants/*vcf.gz' into vcffiles
@@ -280,7 +278,6 @@ if (params.mode=="germline"){
 
     input:
     set sample_Id, file(bam) from bamFiles
-    //file config
     file bed
     file tbi 
     file fasta_ref
