@@ -91,7 +91,7 @@ else if(params.mode=="germline"){ workflow= params.strelka + '/bin/configureStre
 else { println "ERROR: wrong value for --mode option. Must be somatic, germline, or genotyping"; System.exit(0) }
 
 if (params.config==null){ config = workflow + ".ini" } else {config=params.config}
-config = file(config)
+//config = file(config)
 
 fasta_ref = file(params.ref)
 fasta_ref_fai = file( params.ref+'.fai' )
@@ -145,7 +145,7 @@ if(params.mode=="genotyping"){
      file tbi
      file fasta_ref
      file fasta_ref_fai
-     file config
+     //file config
 
      output:
      file 'strelkaAnalysis_T1/results/variants/*vcf.gz'
@@ -220,7 +220,7 @@ if (params.mode=="somatic"){
      file tbi
      file fasta_ref
      file fasta_ref_fai
-     file config
+     //file config
 
      output:
      file 'strelkaAnalysis/results/variants/*vcf.gz' into vcffiles
@@ -280,7 +280,7 @@ if (params.mode=="germline"){
 
     input:
     set sample_Id, file(bam) from bamFiles
-    file config
+    //file config
     file bed
     file tbi 
     file fasta_ref
