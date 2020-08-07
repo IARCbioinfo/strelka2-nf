@@ -18,7 +18,7 @@
 params.help          		= null
 params.ref           		= null
 params.tn_pairs      		= null
-params.input_folder  		= null
+params.input_folder  		= ""
 params.strelka        		= "/opt/conda/envs/strelka2-nf/share/strelka-2.9.10-0/"
 params.config         		= null
 params.cpu            		= "2"
@@ -137,7 +137,8 @@ if(params.mode=="genotyping"){
      memory params.mem+'GB'
      tag { sample }
 
-     publishDir params.output_folder, mode: 'copy'
+     publishDir params.output_folder+"/VCFs/raw", mode: 'copy', pattern: "*vcf*"
+     publishDir params.output_folder+"/CallableRegions", mode: 'copy', pattern: "*bed*"
 
      input:
      set val(sample), file(bamT), file(baiT), file(bamN), file(baiN), file(vcfSNV), file(vcfSNVtbi), file(vcfINDEL), file(vcfINDELtbi) from pairs2genotype
@@ -170,7 +171,7 @@ if(params.mode=="genotyping"){
      forcedGT=''
      for v in `ls *.vcf.gz`; do forcedGT=$forcedGT' --forcedGT '$v; done
      forcedGT=$forcedGT" --callRegions regions.bed.gz"
-     !{workflow} $forcedGT !{files1} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
+     !{workflow} $forcedGT !{files1} --referenceFasta !{fasta_ref} --config !{config} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
      cd strelkaAnalysis
      ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
      cd results/variants
@@ -184,7 +185,7 @@ if(params.mode=="genotyping"){
 
      cd ../../..
      mv strelkaAnalysis strelkaAnalysis_T1
-     !{workflow} $forcedGT !{files2} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
+     !{workflow} $forcedGT !{files2} --referenceFasta !{fasta_ref} --config !{config} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
      cd strelkaAnalysis
      ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
      cd results/variants
@@ -203,15 +204,16 @@ if(params.mode=="genotyping"){
 }else{
 
 if (params.mode=="somatic"){
-
+  println "Entering somatic mode"
   pairs = Channel.fromPath(params.tn_pairs).splitCsv(header: true, sep: '\t', strip: true)
-  .map{ row -> [ file(params.input_folder + "/" + row.tumor), file(params.input_folder + "/" + row.tumor+'.bai'), file(params.input_folder + "/" + row.normal), file(params.input_folder + "/" + row.normal+'.bai') ] }
+  .map{ row -> [ file(params.input_folder + row.tumor), file(params.input_folder + row.tumor+'.bai'), file(params.input_folder + row.normal), file(params.input_folder + row.normal+'.bai') ] }
 
   process run_strelka_somatic {
      cpus params.cpu
      memory params.mem+'GB' 
       
-     publishDir params.output_folder, mode: 'copy'
+     publishDir params.output_folder+"/VCFs/raw", mode: 'copy', pattern: "*vcf*"
+     publishDir params.output_folder+"/CallableRegions", mode: 'copy', pattern: "*bed*"
 
      input:
      file pair from pairs
@@ -221,15 +223,14 @@ if (params.mode=="somatic"){
      file fasta_ref_fai
 
      output:
-     file 'strelkaAnalysis/results/variants/*vcf.gz' into vcffiles
-     file 'strelkaAnalysis/results/variants/*.tbi' into tbifiles
-     file 'strelkaAnalysis/results/regions/*.bed.gz' optional true into regionfiles
-     file 'strelkaAnalysis/results/regions/*.tbi' optional true into regiontbifiles
+     file '*_vs_*somatic*.vcf.gz' into vcffiles
+     file '*_vs_*somatic*vcf.gz.tbi' into tbifiles
+     file '*callable.regions.bed.gz*' optional true into regionfiles
 
      shell:
      if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
      '''
-     !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{rna} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
+     !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
      cd strelkaAnalysis
      ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
      cd ..
@@ -239,16 +240,18 @@ if (params.mode=="somatic"){
      mv somatic.indels.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.indels.vcf.gz.tbi
      mv somatic.snvs.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.snvs.vcf.gz.tbi
      fixStrelkaOutput.sh *.vcf.gz
-     mv strelkaAnalysis/results/regions/* .
-     mv somatic.callable.regions.bed.gz !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz
-     mv somatic.callable.regions.bed.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz.tbi
+     if [ -d strelkaAnalysis/results/regions/ ]; then
+     	mv strelkaAnalysis/results/regions/* .
+     	mv somatic.callable.regions.bed.gz !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz
+     	mv somatic.callable.regions.bed.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz.tbi
+     fi
      '''
   }
     
   if (params.AF){
       process getAllelicFractionSomatic{
 
-         publishDir params.output_folder, mode: 'copy'
+         publishDir params.output_folder+"/VCFs/withAF/", mode: 'copy'
 
          input:
          file vcf from vcffiles
@@ -258,10 +261,13 @@ if (params.mode=="somatic"){
 
          shell:
          '''
-         getAllelicFraction
+         !{baseDir}/bin/getAllelicFraction !{vcf}
          '''
       }
-   } 
+      passfiles.into{ vcffiles1 ; vcffiles2 }
+   }else{
+      vcffiles.into{ vcffiles1 ; vcffiles2 }	
+   }
 }
 
 
@@ -274,7 +280,8 @@ if (params.mode=="germline"){
     memory params.mem+'GB'
     tag { sample_Id }
       
-    publishDir params.output_folder, mode: 'copy'
+    publishDir params.output_folder+"/VCFs/raw", mode: 'copy', pattern: "*vcf*"
+    publishDir params.output_folder+"/CallableRegions", mode: 'copy', pattern: "*bed*"
 
     input:
     set sample_Id, file(bam) from bamFiles
@@ -284,7 +291,9 @@ if (params.mode=="germline"){
     file fasta_ref_fai
     
     output:
-    file 'strelkaAnalysis/results/variants/*.germline.vcf.gz*' into vcffiles
+    file 'strelkaAnalysis/results/variants/*.germline.vcf.gz' into vcffiles
+    file 'strelkaAnalysis/results/variants/*.germline.vcf.gz.tbi' into vcftbifiles
+    file '*callable.regions.bed.gz*' optional true into regionfiles
 
     shell:
     if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
@@ -298,23 +307,6 @@ if (params.mode=="germline"){
   }
 
   vcffiles.into{ vcffiles1 ; vcffiles2 }
-
-  if (params.AF){
-      process getAllelicFractionGermline{
-         publishDir params.output_folder, mode: 'copy'
-
-         input:
-         file vcf from vcffiles1
-
-         output:
-         file '*.vcf' into passfiles
-
-         shell:
-         '''
-         getAllelicFraction 
-         '''
-      }
-  }
 }
 
 }
@@ -323,17 +315,18 @@ process filter_pass{
    cpus 1
    memory '1GB'
 
-   publishDir params.output_folder+"/filtered/", mode: 'copy'
+   publishDir params.output_folder+"/VCFs/filtered/", mode: 'copy'
 
    input:
    file vcf from vcffiles2
 
    output:
-   file '*_PASS.vcf.gz' into filtered
+   file '*_PASS.vcf.gz*' into filtered
 
    shell:
-   file_tag = vcf[0].name.replace(".vcf.gz","")
+   file_tag = vcf[0].name.replace(".vcf.gz","").replace(".vcf","")
    '''
    bcftools view -f PASS -O z !{vcf[0]} -o !{file_tag}_PASS.vcf.gz
+   bcftools index -t !{file_tag}_PASS.vcf.gz
    '''
 }
