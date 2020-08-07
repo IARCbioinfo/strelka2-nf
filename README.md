@@ -5,40 +5,16 @@
 [![https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg](https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg)](https://singularity-hub.org/collections/4622)
 
 #### Dependencies
-1. Install [Strelka v2](https://github.com/Illumina/strelka).
-2. Install [nextflow](http://www.nextflow.io/).
+1. Nextflow : for common installation procedures see the [IARC-nf](https://github.com/IARCbioinfo/IARC-nf) repository.
+2. Install [Strelka v2](https://github.com/Illumina/strelka).
 
-	```bash
-	curl -fsSL get.nextflow.io | bash
-	```
-	And move it to a location in your `$PATH` (`/usr/local/bin` for example here):
-	```bash
-	sudo mv nextflow /usr/local/bin
-	```
+## Input 
+ | Type      | Description     |
+  |-----------|---------------|
+  | --input_folder    | folder with bam files |
+  |--tn_pairs | Tab delimited text file with two columns called normal and tumor (for somatic mode only) |
 
-#### Execution
-
-mode somatic
-`nextflow run iarcbioinfo/strelka2.nf --mode somatic --ref hg38.fa --tn_pairs pairs.txt --input_folder path/to/bam/ --strelka path/to/strelka/`
-
-mode germline
-`nextflow run iarcbioinfo/strelka2.nf --mode germline --ref hg38.fa --input_folder path/to/bam/ --strelka path/to/strelka/`
-
-#### Options
---rna
---exome
---callRegions
---outputCallableRegions
-
-#### Help section
-You can print the help manual by providing `--help` in the execution command line:
-```bash
-nextflow run iarcbioinfo/strelka2.nf --help
-```
-This shows details about optional and mandatory parameters provided by the user.  
-
-#### pairs.txt format
-The pairs.txt file is where you can define pairs of bam to analyse with strelka. It's a tabular file with 2 columns normal and tumor.
+Note: the file provided to --tn_pairs is where you can define pairs of bam to analyse with strelka. It's a tabular file with 2 columns normal and tumor.
 
 | normal | tumor |
 | ----------- | ---------- |
@@ -46,22 +22,46 @@ The pairs.txt file is where you can define pairs of bam to analyse with strelka.
 | normal2.bam | tumor2.bam |
 | normal3.bam | tumor3.bam |
 
-#### Global parameters
-```--strelka``` and ```--ref``` are mandatory parameters but can be defined in your nextflow config file (```~/.nextflow/config``` or ```config``` in the working directory) and so not set as inputs.
+## Parameters
 
-The following is an example of config part defining this:
-```bash
-profiles {
+* #### Mandatory
 
-        standard {
-                params {
-                   ref = '~/Documents/Data/references/hg38.fasta'
-                   strelka = '~/bin/strelka/1.0.15/bin/'
-                }
-        }
-```
+| Name | Example value | Description |
+|-----------|--------------|-------------| 
+|--ref    | hg19.fasta | genome reference |
 
-variants.vcf.gz
+* #### Optional
+
+| Name | Default value | Description |
+|-----------|--------------|-------------| 
+| --mode | somatic | Mode for variant calling; one of somatic, germline, genotyping |
+|--output_folder   | strelka_ouptut | Output folder for vcf files |
+|--cpu          | 2 | number of CPUs |
+|--mem         | 20 | memory|
+|--strelka  | path inside docker and singularity containers | Strelka installation dir |
+|--config | default conf of strelka | Use custom configuration file |
+|--callRegions | none | Region bed file |
+
+* #### Flags
+
+Flags are special parameters without value.
+
+| Name  | Description |
+|-----------|-------------| 
+| --help | print usage and optional parameters |
+| --exome | automatically set up parameters for exome data |
+| --rna | automatically set up parameters for rna data |
+|--outputCallableRegions | Create a BED track containing regions which are determined to be callable |
+
+## Usage
+
+mode somatic
+`nextflow run iarcbioinfo/strelka2.nf r v1.1 -profile singularity --mode somatic --ref hg38.fa --tn_pairs pairs.txt --input_folder path/to/bam/ --strelka path/to/strelka/`
+
+mode germline
+`nextflow run iarcbioinfo/strelka2.nf r v1.1 -profile singularity --mode germline --ref hg38.fa --input_folder path/to/bam/ --strelka path/to/strelka/`
+
+To run the pipeline without singularity just remove "-profile singularity". Alternatively, one can run the pipeline using a docker container (-profile docker) the conda receipe containing all required dependencies (-profile conda).
 
 ## Output
   | Type      | Description     |
@@ -70,3 +70,14 @@ variants.vcf.gz
   | filtered/\*PASS.vcf.gz    | VCF files with only variants with PASS flag |
   
   All vcf files have companion tabix index files (.tbi). Note that in germline mode, the VCF outputted corresponds to variants only (file variants.vcf.gz from strelka). 
+
+## Directed Acyclic Graph
+[![DAG](dag.png)](http://htmlpreview.github.io/?https://github.com/IARCbioinfo/strelka-nf/blob/master/dag.html)
+
+
+## Contributions
+
+  | Name      | Email | Description     |
+  |-----------|---------------|-----------------| 
+  | Vincent Cahais | CahaisV@iarc.fr | Developer |
+  | Nicolas Alcala | AlcalaN@iarc.fr    | Developer|
