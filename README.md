@@ -4,6 +4,8 @@
 [![Docker Hub](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/repository/docker/iarcbioinfo/strelka2-nf)
 [![https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg](https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg)](https://singularity-hub.org/collections/4622)
 
+![Workflow representation](strelka2-nf.png?raw=true "Scheme of variant calling with strelka2 Workflow")
+
 #### Dependencies
 1. Nextflow : for common installation procedures see the [IARC-nf](https://github.com/IARCbioinfo/IARC-nf) repository.
 2. Install [Strelka v2](https://github.com/Illumina/strelka).
@@ -50,7 +52,8 @@ Flags are special parameters without value.
 |-----------|-------------| 
 | --help | print usage and optional parameters |
 | --exome | automatically set up parameters for exome data |
-| --rna | automatically set up parameters for rna data |
+| --rna | automatically set up parameters for rna data (only available for --mode germline) |
+| --AF | Add AF field to VCF (only available for --mode somatic) |
 |--outputCallableRegions | Create a BED track containing regions which are determined to be callable |
 
 ## Usage
@@ -66,10 +69,12 @@ To run the pipeline without singularity just remove "-profile singularity". Alte
 ## Output
   | Type      | Description     |
   |-----------|---------------|
-  | strelkaAnalysis/results/variants/\*.vcf.gz    | VCF files |
-  | filtered/\*PASS.vcf.gz    | VCF files with only variants with PASS flag |
+  | VCFs/raw/\*.vcf.gz    | VCF files before filtering |
+  | VCFs/withAF/\*.vcf   | VCF files with AF field (optional, requires flag --AF) |
+  | VCFs/filtered/\*PASS.vcf.gz    | final compressed and indexed VCF files (optionally with flag --AF) |
+  | CallableRegions/\*.bed.gz    | compressed and indexed BED files (optionally with flag --outputCallableRegions) |
   
-  All vcf files have companion tabix index files (.tbi). Note that in germline mode, the VCF outputted corresponds to variants only (file variants.vcf.gz from strelka). 
+  Final vcf files have companion tabix index files (.tbi). Note that in germline mode, the VCF outputted corresponds to variants only (file variants.vcf.gz from strelka). 
 
 ## Directed Acyclic Graph
 [![DAG](dag.png)](http://htmlpreview.github.io/?https://github.com/IARCbioinfo/strelka-nf/blob/master/dag.html)
