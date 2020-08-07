@@ -19,12 +19,12 @@ jobs:
 #                - run: cd ~ ; singularity pull ...
                 - run: cd ~ && git clone https://github.com/iarcbioinfo/data_test.git
                 - run: cd ; nextflow run ~/project/ --help
-                - run: cd ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --input_folder ~/data_test/BAM/ --mode germline --output_folder strelka2-germline-results --ref ~/data_test/REF/17.fasta --cpu 2 --mem 4 -with-dag dag.html
-                - run: cd ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --input_folder ~/data_test/BAM/ --mode germline --output_folder strelka2-germline-results --ref ~/data_test/REF/17.fasta --cpu 2 --mem 4 -with-dag dag.png -resume
+                - run: cd ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --input_folder ~/data_test/BAM/ --mode germline --output_folder strelka2-germline-results --ref ~/data_test/REF/17.fasta --cpu 2 --mem 4
                 - run: cd ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --input_folder ~/data_test/BAM/ --mode germline --output_folder strelka2-germline-exome-results --ref ~/data_test/REF/17.fasta --exome --cpu 2 --mem 4
                 - run: cd ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --input_folder ~/data_test/BAM/ --mode germline --output_folder strelka2-germline-rna-results --ref ~/data_test/REF/17.fasta --rna --cpu 2 --mem 4
                 - run: cd ; echo -e 'tumor\tnormal\ndata_test/BAM/test/NA06984_T.bam\tdata_test/BAM/test/NA06984_N.bam' > input.tsv ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --tn_pairs input.tsv --mode somatic --output_folder strelka2-somatic-results --ref ~/data_test/REF/17.fasta --cpu 2 --mem 4
-                - run: cd ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --tn_pairs input.tsv --mode somatic  --output_folder strelka2-somatic-callable-exome-results --ref ~/data_test/REF/17.fasta --AF --exome --outputCallableRegions --cpu 2 --mem 4
+                - run: cd ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --tn_pairs input.tsv --mode somatic  --output_folder strelka2-somatic-callable-exome-results --ref ~/data_test/REF/17.fasta --AF --exome --outputCallableRegions --cpu 2 --mem 4 -with-dag dag.html
+                - run: cd ; nextflow run ~/project/ -with-docker iarcbioinfo/strelka2-nf --tn_pairs input.tsv --mode somatic  --output_folder strelka2-somatic-callable-exome-results --ref ~/data_test/REF/17.fasta --AF --exome --outputCallableRegions --cpu 2 --mem 4 -with-dag dag.png -resume
                 - run: cd ; cp ~/dag.* ~/project/.
                 - add_ssh_keys:
                                 fingerprints:
