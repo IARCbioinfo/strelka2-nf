@@ -118,8 +118,9 @@ nodes: [
 { data: { id: 'p10', label: 'getAllelicFractionSomatic'}, classes: 'PROCESS' },
 { data: { id: 'p11', label: 'into'}, classes: 'OPERATOR' },
 { data: { id: 'p12'}, classes: 'NODE' },
-{ data: { id: 'p13', label: 'filter_pass'}, classes: 'PROCESS' },
-{ data: { id: 'p14'}, classes: 'NODE' },
+{ data: { id: 'p13', label: 'flatten'}, classes: 'OPERATOR' },
+{ data: { id: 'p14', label: 'filter_pass'}, classes: 'PROCESS' },
+{ data: { id: 'p15'}, classes: 'NODE' },
 ],
 edges: [
 { data: { source: 'p0', target: 'p1'} },
@@ -135,7 +136,8 @@ edges: [
 { data: { source: 'p10', target: 'p11', label: 'passfiles' } },
 { data: { source: 'p11', target: 'p13', label: 'vcffiles2' } },
 { data: { source: 'p11', target: 'p12', label: 'vcffiles1' } },
-{ data: { source: 'p13', target: 'p14', label: 'filtered' } },
+{ data: { source: 'p13', target: 'p14'} },
+{ data: { source: 'p14', target: 'p15', label: 'filtered' } },
 ],
 },
 
