@@ -318,7 +318,7 @@ process filter_pass{
    publishDir params.output_folder+"/VCFs/filtered/", mode: 'copy'
 
    input:
-   file vcf from vcffiles2
+   file vcf from vcffiles2.flatten()
 
    output:
    file '*_PASS.vcf.gz*' into filtered
@@ -326,7 +326,7 @@ process filter_pass{
    shell:
    file_tag = vcf[0].name.replace(".vcf.gz","").replace(".vcf","")
    '''
-   bcftools view -f PASS -O z !{vcf[0]} -o !{file_tag}_PASS.vcf.gz
+   bcftools view -f PASS -O z !{vcf} -o !{file_tag}_PASS.vcf.gz
    bcftools index -t !{file_tag}_PASS.vcf.gz
    '''
 }
