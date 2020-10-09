@@ -206,7 +206,7 @@ if(params.mode=="genotyping"){
 if (params.mode=="somatic"){
   println "Entering somatic mode"
   pairs = Channel.fromPath(params.tn_pairs).splitCsv(header: true, sep: '\t', strip: true)
-  .map{ row -> [ file(params.input_folder + row.tumor), file(params.input_folder + row.tumor+'.bai'), file(params.input_folder + row.normal), file(params.input_folder + row.normal+'.bai') ] }
+  .map{ row -> [row.sample, file(params.input_folder + row.tumor), file(params.input_folder + row.tumor+'.bai'), file(params.input_folder + row.normal), file(params.input_folder + row.normal+'.bai') ] }
 
   process run_strelka_somatic {
      cpus params.cpu
@@ -216,7 +216,7 @@ if (params.mode=="somatic"){
      publishDir params.output_folder+"/CallableRegions", mode: 'copy', pattern: "*bed*"
 
      input:
-     file pair from pairs
+     set val(sample), file(bamT), file(baiT) , file(bamN), file(baiN) from pairs
      file bed
      file tbi
      file fasta_ref
@@ -229,21 +229,27 @@ if (params.mode=="somatic"){
 
      shell:
      if (params.callRegions!="NO_FILE") { callRegions="--callRegions $bed" } else { callRegions="" }
+     if(sample){
+	output_prefix="${sample}.somatic"
+     }else{
+	output_prefix="${bamT}_vs_${bamN}.somatic"
+     }
      '''
-     !{workflow} --tumorBam !{pair[0]} --normalBam !{pair[2]} --referenceFasta !{fasta_ref} --config !{config} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
+     echo "!{sample}"
+     !{workflow} --tumorBam !{bamT} --normalBam !{bamN} --referenceFasta !{fasta_ref} --config !{config} !{exome} --runDir strelkaAnalysis !{callRegions} !{outputCallableRegions}
      cd strelkaAnalysis
      ./runWorkflow.py -m local -j !{params.cpu} -g !{params.mem}
      cd ..
      mv strelkaAnalysis/results/variants/* .
-     mv somatic.indels.vcf.gz !{pair[0]}_vs_!{pair[2]}.somatic.indels.vcf.gz
-     mv somatic.snvs.vcf.gz !{pair[0]}_vs_!{pair[2]}.somatic.snvs.vcf.gz
-     mv somatic.indels.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.indels.vcf.gz.tbi
-     mv somatic.snvs.vcf.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.snvs.vcf.gz.tbi
+     mv somatic.indels.vcf.gz !{output_prefix}.indels.vcf.gz
+     mv somatic.snvs.vcf.gz !{output_prefix}.snvs.vcf.gz
+     mv somatic.indels.vcf.gz.tbi !{output_prefix}.indels.vcf.gz.tbi
+     mv somatic.snvs.vcf.gz.tbi !{output_prefix}.snvs.vcf.gz.tbi
      fixStrelkaOutput.sh *.vcf.gz
      if [ -d strelkaAnalysis/results/regions/ ]; then
      	mv strelkaAnalysis/results/regions/* .
-     	mv somatic.callable.regions.bed.gz !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz
-     	mv somatic.callable.regions.bed.gz.tbi !{pair[0]}_vs_!{pair[2]}.somatic.callable.regions.bed.gz.tbi
+     	mv somatic.callable.regions.bed.gz !{output_prefix}.callable.regions.bed.gz
+     	mv somatic.callable.regions.bed.gz.tbi !{output_prefix}.callable.regions.bed.gz.tbi
      fi
      '''
   }
