@@ -1,0 +1,106 @@
+#!/usr/bin/env Rscript
+library(data.table)
+library(tidyr)
+
+args = commandArgs(trailingOnly=TRUE)
+print(args)
+for(infile in args){
+indels = FALSE
+if (length(grep("indel",infile))==1) {
+    indels = TRUE
+    print("indels file")
+}else{
+    print("snvs file")
+}
+
+#get allelicfraction
+#snvs<-read.table(args[1], sep="\t", header=T)
+snvs<-fread(paste0("zcat ", infile), skip = "CHROM")
+dict<-list( "A"=6, "C"=7, "G"=8, "T"=9 )
+
+#filter PASS
+snvs<-snvs[snvs$FILTER=="PASS",]
+
+system(paste0("zcat ",infile,"  | sed '/#CHROM/Q' > ",infile,".header"))
+if(nrow(snvs)==0){
+	write.table(snvs, file=paste0( substr( infile, 1, nchar(infile)-7), ".vcf.body"), sep="\t", row.names=F, quote=F)
+	system(paste0("cat ",infile,".header ",substr( infile, 1, nchar(infile)-7), ".vcf.body > ",substr( infile, 1, nchar(infile)-7), ".vcf"))
+	next
+}
+
+#get REF column and get only first letter if needed
+ref<-as.factor(snvs$REF)
+if (length(levels(ref))>4){
+    ref<-unlist(lapply(as.character(snvs$REF), function(x){ strsplit( x, ",")[[1]][1] } ))
+}
+
+
+#get ALT column and get only first letter if needed
+alt<-as.factor(snvs$ALT)
+if (length(levels(alt))>4){
+    alt<-unlist(lapply(as.character(snvs$ALT), function(x){ strsplit( x, ",")[[1]][1] } ))
+}
+
+#split NORMAL column by ","
+n<-strsplit(as.character(snvs$NORMAL),":")
+
+#split TUMOR column by ","
+t<-strsplit(as.character(snvs$TUMOR),":")
+
+Cov_N<-Cov_T<-AF_N<-AF_T<-0
+
+#get coverage in normal
+Cov_N<-as.numeric(unlist(lapply( n, function(x){ x[2] } )))
+
+#get coverage in tumor
+Cov_T<-as.numeric(unlist(lapply( t, function(x){ x[2] } )))
+
+if (!indels){
+    #get coverage in normal
+    filtered<-as.numeric(unlist(lapply( n, function(x){ x[3] } )))
+    Cov_N<-Cov_N-filtered
+
+    #get allelic fraction
+    AF_N<-unlist(lapply( 1:length(alt), function(x){
+        if (alt[x]==".") {0} else { as.numeric(strsplit( n[[x]][ dict[[alt[x]]] ],",")[[1]][1]) }
+    }))
+
+    #get coverage in tumor
+    filtered<-as.numeric(unlist(lapply( t, function(x){ x[3] } )))
+    Cov_T<-Cov_T-filtered
+
+    #get allelic fraction
+    AF_T<-unlist(lapply( 1:length(alt), function(x){
+        if (alt[x]==".") {0} else { as.numeric(strsplit( t[[x]][ dict[[alt[x]]] ],",")[[1]][1]) }
+    }))
+}
+
+if (indels){
+    #get allelic fraction
+    AF_N<-unlist(lapply( 1:length(ref), function(x){
+      as.numeric(strsplit( n[[x]][ 5 ],",")[[1]][1])
+    }))
+
+    #get allelic fraction
+    AF_T<-unlist(lapply( 1:length(alt), function(x){
+        as.numeric(strsplit( t[[x]][ 5 ],",")[[1]][1])
+    }))
+}
+AF_N<-AF_N/Cov_N
+AF_T<-AF_T/Cov_T
+
+#nh<-sapply( strsplit(snvs$FORMAT[1],":"), function(x){ paste0("N_",x)} )
+#nt<-sapply( strsplit(snvs$FORMAT[1],":"), function(x){ paste0("T_",x)} )
+print(snvs)
+snvs$FORMAT = paste(snvs$FORMAT,"COV", "AF",sep=":")
+snvs$NORMAL = paste(snvs$NORMAL,Cov_N, AF_N,sep=":")
+snvs$TUMOR = paste(snvs$TUMOR,Cov_T, AF_T,sep=":")
+#foo<-cbind(snvs[,1:(ncol(snvs)-3)],FORMAT,NORMAL,TUMOR)
+#foo<-separate(foo,col = "NORMAL",into = nh, sep = ":")
+#foo<-separate(foo,col = "TUMOR",into = nt, sep = ":")
+print(snvs)
+
+write.table(snvs, file=paste0( substr( infile, 1, nchar(infile)-7), ".vcf.body"), sep="\t", row.names=F, quote=F)
+system(paste0("cat ",infile,".header ",substr( infile, 1, nchar(infile)-7), ".vcf.body > ",substr( infile, 1, nchar(infile)-7), ".vcf"))
+}
+

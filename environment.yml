@@ -5,6 +5,6 @@ channels:
   - defaults
 dependencies:
   - strelka=2.9.10
-  - r-data.table =1.11.4
-  - r-tidyr=0.8.1
+  - r-data.table =1.12.8
+  - r-tidyr=1.1.1
   - bcftools=1.10.2
