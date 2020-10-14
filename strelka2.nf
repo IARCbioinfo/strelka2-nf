@@ -223,8 +223,8 @@ if (params.mode=="somatic"){
      file fasta_ref_fai
 
      output:
-     file '*_vs_*somatic*.vcf.gz' into vcffiles
-     file '*_vs_*somatic*vcf.gz.tbi' into tbifiles
+     file '*.somatic.*.vcf.gz' into vcffiles
+     file '*.somatic.*.vcf.gz.tbi' into tbifiles
      file '*callable.regions.bed.gz*' optional true into regionfiles
 
      shell:
