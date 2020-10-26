@@ -8,3 +8,4 @@ dependencies:
   - r-data.table =1.12.8
   - r-tidyr=1.1.1
   - bcftools=1.10.2
+  - bedops=2.4.39
