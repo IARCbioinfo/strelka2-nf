@@ -14,9 +14,9 @@
  | Type      | Description     |
   |-----------|---------------|
   | --input_folder    | folder with bam files |
-  |--tn_pairs | Tab delimited text file with two columns called normal and tumor (for somatic mode only) |
+  |--input_file | Tab delimited text file with either two columns called normal and tumor (somatic mode) or one column called bam (germline mode); optionally, a column called sample containing sample names to be used for naming the files can be provided and for genotyping (see genotyping mode below) a column called vcf has to be provided |
 
-Note: the file provided to --tn_pairs is where you can define pairs of bam to analyse with strelka. It's a tabular file with 2 columns normal and tumor.
+Note: the file provided to --input_file is where you can define pairs of bam to analyse with strelka in somatic mode. It's a tabular file with 2 columns normal and tumor.
 
 | normal | tumor |
 | ----------- | ---------- |
@@ -58,13 +58,16 @@ Flags are special parameters without value.
 
 ## Usage
 
-mode somatic
-`nextflow run iarcbioinfo/strelka2.nf r v1.1 -profile singularity --mode somatic --ref hg38.fa --tn_pairs pairs.txt --input_folder path/to/bam/ --strelka path/to/strelka/`
-
-mode germline
-`nextflow run iarcbioinfo/strelka2.nf r v1.1 -profile singularity --mode germline --ref hg38.fa --input_folder path/to/bam/ --strelka path/to/strelka/`
+### mode somatic
+`nextflow run iarcbioinfo/strelka2.nf r v1.2 -profile singularity --mode somatic --ref hg38.fa --tn_pairs pairs.txt --input_folder path/to/bam/ --strelka path/to/strelka/`
 
 To run the pipeline without singularity just remove "-profile singularity". Alternatively, one can run the pipeline using a docker container (-profile docker) the conda receipe containing all required dependencies (-profile conda).
+
+### mode germline
+`nextflow run iarcbioinfo/strelka2.nf r v1.2 -profile singularity --mode germline --ref hg38.fa --input_folder path/to/bam/ --strelka path/to/strelka/`
+
+### genotyping
+When using the input_file mode, if a vcf column with the path to a VCF file for each sample containing a list of somatic variant is provided, the pipeline will use the --forcedGT option from strelka that genotypes these positions, and compute a bedfile for these positions so only variants from the VCF will be genotyped. Note that genotyping can be performed both in somatic mode (in which case tumor/normal pairs must be provided) and germline mode (in which case a single bam file must be provided).
 
 ## Output
   | Type      | Description     |

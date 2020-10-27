@@ -6,7 +6,7 @@ FROM continuumio/miniconda3:4.7.12
 LABEL base_image="continuumio/miniconda3"
 LABEL version="4.7.12"
 LABEL software="strelka2-nf"
-LABEL software.version="1.0"
+LABEL software.version="1.2"
 LABEL about.summary="Container image containing all requirements for strelka2-nf"
 LABEL about.home="http://github.com/IARCbioinfo/strelka2-nf"
 LABEL about.documentation="http://github.com/IARCbioinfo/strelka2-nf/README.md"
