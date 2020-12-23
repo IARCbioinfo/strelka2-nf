@@ -31,10 +31,11 @@ params.outputCallableRegions = null
 params.callRegions    		= "NO_FILE"
 params.AF            		= null
 params.suffix              = ".PASS"
+params.ext                      = "cram"
 
 log.info ""
 log.info "----------------------------------------------------------------"
-log.info "  Strelka2 1.2 : variant calling with Strelka2 using nextflow "
+log.info "  Strelka2 1.2a : variant calling with Strelka2 using nextflow "
 log.info "----------------------------------------------------------------"
 log.info "Copyright (C) IARC/WHO"
 log.info "This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE"
@@ -54,7 +55,7 @@ if (params.help) {
     log.info ""
     log.info "Mandatory arguments:"
     log.info "--ref                  FILE                 Genome reference file"
-    log.info "--input_folder         FOLDER               Folder containing BAM files"
+    log.info "--input_folder         FOLDER               Folder containing BAM or CRAM files"
     log.info "--input_file           FILE                 Tab delimited text file with at least two columns called normal and tumor;"
     log.info "                                            optionally a sample column and a vcf column to use mutect's --forcedGT"
     log.info ""
@@ -75,6 +76,7 @@ if (params.help) {
     log.info "--strelka              PATH                 Strelka installation dir (default: path inside docker and singularity containers)"
     log.info "--config               FILE                 Path to custom strelka configuration file (default: none)"
     log.info "--callRegions          PATH                 Region bed file (default: none)"
+    log.info "--ext		     STRING		  Extension of alignment files (CRAM or BAM)"
     log.info ""
     log.info "Flags:"
     log.info "--exome                                     automatically set up parameters for exome data"
@@ -119,13 +121,17 @@ log.info "exome         	= ${params.exome}"
 log.info "rna           	= ${params.rna}"
 log.info "callRegions   	= ${params.callRegions}"
 log.info "outputCallableRegions = ${outputCallableRegions}"
+log.info "ext                   = ${params.ext}"
 log.info ""
 }
+
+ext_ind = ".crai"
+if(params.ext=="bam"){ ext_ind=".bai"}
 
 if(params.mode=="genotyping"){ 
 	if( params.rna ) { workflow= params.strelka + '/bin/configureStrelkaGermlineWorkflow.py' }
 	pairs = Channel.fromPath(params.input_file).splitCsv(header: true, sep: '\t', strip: true)
-			.map{ row -> [ row.sample , file(params.input_folder + "/" + row.tumor), file(params.input_folder + "/" + row.tumor+'.bai'), file(params.input_folder + "/" + row.normal), file(params.input_folder + "/" + row.normal+'.bai'), 
+			.map{ row -> [ row.sample , file(params.input_folder + "/" + row.tumor), file(params.input_folder + "/" + row.tumor+ext_ind), file(params.input_folder + "/" + row.normal), file(params.input_folder + "/" + row.normal+ext_ind), 
 					file(params.input_folder + "/" + row.vcf1) , file(params.input_folder + "/" + row.vcf1 + ".tbi") ,
 					file(params.input_folder + "/" + row.vcf2) , file(params.input_folder + "/" + row.vcf2 + ".tbi") ]}
 			
@@ -202,8 +208,8 @@ if(params.mode=="genotyping"){
 if (params.mode=="somatic"){
   println "Entering somatic mode"
   pairs = Channel.fromPath(params.input_file).splitCsv(header: true, sep: '\t', strip: true)
-  .map{ row -> [row.sample, file(params.input_folder + row.tumor), file(params.input_folder + row.tumor+'.bai'), file(params.input_folder + row.normal), 
-                file(params.input_folder + row.normal+'.bai'), file(params.input_folder + row.vcf), file(params.input_folder + row.vcf+'.tbi') ] }
+  .map{ row -> [row.sample, file(params.input_folder + row.tumor), file(params.input_folder + row.tumor+ext_ind), file(params.input_folder + row.normal), 
+                file(params.input_folder + row.normal+ext_ind), file(params.input_folder + row.vcf), file(params.input_folder + row.vcf+'.tbi') ] }
 
   process run_strelka_somatic {
      cpus params.cpu
@@ -282,10 +288,10 @@ if (params.mode=="somatic"){
 if (params.mode=="germline"){
   if(params.input_file){
    bamFiles = Channel.fromPath(params.input_file).splitCsv(header: true, sep: '\t', strip: true)
-   .map{ row -> [row.sample, file(params.input_folder + row.bam), file(params.input_folder + row.bam+'.bai'), file(params.input_folder + row.vcf), 
+   .map{ row -> [row.sample, file(params.input_folder + row.bam), file(params.input_folder + row.bam+ext_ind), file(params.input_folder + row.vcf), 
    file(params.input_folder + row.vcf+'.tbi') ] }
   }else{
-     bamFiles = Channel.fromFilePairs( params.input_folder + '/*.{bam,bam.bai}',flat: true)
+     bamFiles = Channel.fromFilePairs( params.input_folder + "/*.{${params.ext},${params.ext}${ext_ind}}",flat: true)
                        .map{row -> [row[0],row[1],row[2],file('NO_VCF'),file('NO_VCF_TBI')]}
   }
 
