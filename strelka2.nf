@@ -30,8 +30,6 @@ params.rna                      = null
 params.outputCallableRegions    = null
 params.callRegions              = "NO_FILE"
 params.AF                       = null
-params.suffix                   = ".PASS"
-params.ext                      = "cram"
 
 log.info ""
 log.info "--------------------------------------------------------------------"
@@ -78,7 +76,6 @@ if (params.help) {
     log.info "--strelka              PATH                 Strelka installation dir (default: path inside docker and singularity containers)"
     log.info "--config               FILE                 Path to custom strelka configuration file (default: none)"
     log.info "--callRegions          PATH                 Region bed file (default: none)"
-    log.info "--ext                  STRING               Extension of alignment files (CRAM or BAM)"
     log.info ""
     log.info "Flags:"
     log.info "--exome                                     automatically set up parameters for exome data"
@@ -99,11 +96,9 @@ if (!(params.mode in ["somatic", "genotyping", "germline", "rna"])) {
         error "Invalid value for params.mode: ${params.mode}. Supported values are somatic, genotyping, germline, rna."
 }
 
-ext_ind = params.ext == "bam" ? ".bai" : ".crai"
 outputCallableRegionsFlag = params.outputCallableRegions ? "--outputCallableRegions" : ""
 exomeFlag = params.exome ? "--exome" : ""
 rnaFlag = params.rna ? "--rna" : ""
-
 
 log.info ""
 log.info "ref                   = ${params.ref}"
@@ -123,7 +118,7 @@ log.info ""
 
 
 /***************************************************************************************/
-/************************  Process   ***************************************************/
+/************************  Process : run_strelka_somatic *******************************/
 /***************************************************************************************/
 
 process run_strelka_somatic {
@@ -196,6 +191,10 @@ process run_strelka_somatic {
         """
 }
 
+/***************************************************************************************/
+/************************  Process : run_strelka_germline ******************************/
+/***************************************************************************************/
+
 process run_strelka_germline {
 
     cpus params.cpu
@@ -252,6 +251,9 @@ process run_strelka_germline {
     
 }
 
+/***************************************************************************************/
+/************************  Process : run_strelkaGenotyping *****************************/
+/***************************************************************************************/
 
 process run_strelkaGenotyping {
 
@@ -403,8 +405,8 @@ workflow {
             assert (row.normal != null) : "Error: normal file is missing check your input_file"
             tuple(
                 row.sample, 
-                file(row.tumor),file(row.tumor + ext_ind),
-                file(row.normal),file(row.normal + ext_ind),
+                file(row.tumor),file("${row.tumor}.{bai,crai}"),
+                file(row.normal),file("${row.normal}.{bai,crai}"),
                 row.snp ? file(row.snp) : file("NO_SNPS"), 
                 row.snp ? file(row.snp + ".tbi") : file("NO_SNPS.TBI"),
                 row.indels ? file(row.indels) : file("NO_INDEL"), 
@@ -417,7 +419,7 @@ workflow {
             assert (row.tumor != null ) : "Error: tumor file is missing check your input_file"
             tuple(
                 row.sample, 
-                file(row.tumor),file(row.tumor + ext_ind),
+                file(row.tumor),file("${row.tumor}.{bai,crai}"),
                 row.snp ? file(row.snp) : file("NO_SNPS"), 
                 row.snp ? file(row.snp + ".tbi") : file("NO_SNPS.TBI"),
                 row.indels ? file(row.indels) : file("NO_INDEL"), 
@@ -425,7 +427,7 @@ workflow {
             )}
     } else if (params.input_folder && params.mode=="germline"){
         println("input from folder")
-        input = Channel.fromFilePairs( params.input_folder + "/*.{${params.ext},${params.ext}${ext_ind}}",flat: true) | map{
+        input = Channel.fromFilePairs( params.input_folder + "/*.{bam,bam.bai,cram,cram.crai}",flat: true) | map{
             row -> tuple(
                 row[0],row[1],row[2],file("NO_SNPS"), file("NO_SNPS.TBI"), file("NO_INDEL"), file("NO_INDEL.TBI")
             )}
