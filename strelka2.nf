@@ -81,7 +81,6 @@ if (params.help) {
     log.info "--exome                                     automatically set up parameters for exome data"
     log.info "--rna                                       automatically set up parameters for rna data"
     log.info "--outputCallableRegions                     Create a BED track containing regions which are determined to be callable"
-    log.info "--AF                                        Get allelic fractions"
     log.info "--help                                      Display this message"
     log.info ""
     System.exit(0) 
