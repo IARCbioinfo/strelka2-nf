@@ -17,9 +17,9 @@
 
 params.help                     = null
 params.ref                      = null
-params.input_file               = null
+params.tn_file                  = null
 params.input_folder             = null
-params.strelka                  = "/opt/conda/envs/strelka2-nf/share/strelka-2.9.10-0/"
+params.strelka                  = "/opt/conda/envs/strelka2-nf/share/strelka-2.9.10-1/"
 params.config                   = null
 params.cpu                      = "2"
 params.mem                      = "20"
@@ -29,7 +29,6 @@ params.exome                    = null
 params.rna                      = null
 params.outputCallableRegions    = null
 params.callRegions              = "NO_FILE"
-params.AF                       = null
 
 log.info ""
 log.info "--------------------------------------------------------------------"
@@ -56,7 +55,7 @@ if (params.help) {
     log.info "Mandatory arguments:"
     log.info "--ref                  FILE                 Genome reference file"
     log.info "--input_folder         FOLDER               Folder containing BAM or CRAM files"
-    log.info "--input_file           FILE                 Tab delimited text file with at least two columns called normal and tumor;"
+    log.info "--tn_file              FILE                 Tab delimited text file with at least two columns called normal and tumor;"
     log.info "                                            optionally a sample column and a vcf column to use mutect's --forcedGT"
     log.info ""
     log.info "------------------GERMLINE -----------------------------"
@@ -101,7 +100,7 @@ rnaFlag = params.rna ? "--rna" : ""
 
 log.info ""
 log.info "ref                   = ${params.ref}"
-log.info "input_file            = ${params.input_file}"
+log.info "tn_file               = ${params.tn_file}"
 log.info "input_folder          = ${params.input_folder}"
 log.info "strelka               = ${params.strelka}"
 log.info "cpu                   = ${params.cpu}"
@@ -396,12 +395,12 @@ process filter_pass{
 
 workflow {
 
-    if(params.input_file && params.mode=="somatic"){
+    if(params.tn_file && params.mode=="somatic"){
         println("input from file")
-        input = Channel.fromPath(params.input_file).splitCsv(header: true, sep: '\t', strip: true) | map { 
+        input = Channel.fromPath(params.tn_file).splitCsv(header: true, sep: '\t', strip: true) | map { 
             row -> 
-            assert (row.tumor != null ) : "Error: tumor file is missing check your input_file"
-            assert (row.normal != null) : "Error: normal file is missing check your input_file"
+            assert (row.tumor != null ) : "Error: tumor file is missing check your tn_file"
+            assert (row.normal != null) : "Error: normal file is missing check your tn_file"
             tuple(
                 row.sample, 
                 file(row.tumor),file("${row.tumor}.{bai,crai}"),
@@ -411,11 +410,11 @@ workflow {
                 row.indels ? file(row.indels) : file("NO_INDEL"), 
                 row.indels ? file(row.indels + ".tbi") : file("NO_INDEL.TBI")
             )}
-    } else if(params.input_file && params.mode=="germline"){
+    } else if(params.tn_file && params.mode=="germline"){
         println("input from file")
-        input = Channel.fromPath(params.input_file).splitCsv(header: true, sep: '\t', strip: true) | map { 
+        input = Channel.fromPath(params.tn_file).splitCsv(header: true, sep: '\t', strip: true) | map { 
             row -> 
-            assert (row.tumor != null ) : "Error: tumor file is missing check your input_file"
+            assert (row.tumor != null ) : "Error: tumor file is missing check your tn_file"
             tuple(
                 row.sample, 
                 file(row.tumor),file("${row.tumor}.{bai,crai}"),
@@ -431,7 +430,7 @@ workflow {
                 row[0],row[1],row[2],file("NO_SNPS"), file("NO_SNPS.TBI"), file("NO_INDEL"), file("NO_INDEL.TBI")
             )}
     } else {
-        error "ERROR : NO INPUTS !  You must provide --input_file (with all modes) or --input_folder (with mode germline)"
+        error "ERROR : NO INPUTS !  You must provide --tn_file (with all modes) or --input_folder (with mode germline)"
     }
 
     fasta_ref = tuple( file(params.ref), file( params.ref+'.fai' ) )

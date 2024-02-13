@@ -11,74 +11,86 @@
 2. Install [Strelka v2](https://github.com/Illumina/strelka).
 
 ## Input 
- | Type      | Description     |
-  |-----------|---------------|
-  | --input_folder    | folder with bam/cram files |
-  |--input_file | Tab delimited text file with either two columns called normal and tumor (somatic mode) or one column called bam (germline mode); optionally, a column called sample containing sample names to be used for naming the files can be provided and for genotyping (see genotyping mode below) a column called vcf has to be provided |
+|  Name    | Description   |
+|----------|---------------|
+|--tn_file | Tab delimited text file with either two columns called normal and tumor (somatic mode) or one column called bam (germline mode); optionally, a column called sample containing sample names to be used for naming the files can be provided and for genotyping (see genotyping mode below) a column called vcf has to be provided |
 
-Note: the file provided to --input_file is where you can define pairs of bam/cram to analyse with strelka in somatic mode. It's a tabular file with 2 columns normal and tumor.
+Note: the file provided to --input_file is where you can define pairs of bam/cram to analyse with strelka in somatic mode. It's a tabular file with 3 columns sample, normal and tumor.
 
-| normal | tumor |
-| ----------- | ---------- |
-| normal1.cram | tumor2.cram |
-| normal2.cram | tumor2.cram |
-| normal3.cram | tumor3.cram |
+| sample            | normal       | tumor       |
+| ----------------- | ------------ | ----------- |
+| tumor1_vs_normal1 | normal1.cram | tumor1.cram |
+| tumor2_vs_normal2 | normal2.cram | tumor2.cram |
+| tumor3_vs_normal3 | normal3.cram | tumor3.cram |
 
-## Parameters
+## Reference & Interval
 
-* #### Mandatory
+Reference (--ref) is the fasta file used for creation of bam files, with its *.fai index in the same folder.
+Intervals to call in bed format (CHR START END).
 
-| Name | Example value | Description |
-|-----------|--------------|-------------| 
-|--ref    | hg19.fasta | genome reference |
+| Name         | Default value | Description                   |
+|--------------|---------------|-------------------------------|
+|--ref         |               | reference genome fasta file   |
+|--callRegions |               | Bed file containing intervals | 
 
-* #### Optional
 
-| Name | Default value | Description |
-|-----------|--------------|-------------| 
-| --mode | somatic | Mode for variant calling; one of somatic, germline, genotyping |
-|--output_folder   | strelka_ouptut | Output folder for vcf files |
-|--cpu          | 2 | number of CPUs |
-|--mem         | 20 | memory|
-|--strelka  | path inside docker and singularity containers | Strelka installation dir |
-|--config | default conf of strelka | Use custom configuration file |
-|--callRegions | none | Region bed file |
-|--ext | cram | extension of alignment files (bam or cram) | 
+## Optional options for Strelka
 
-* #### Flags
+| Name      | Default value | Description      |
+|-----------|-----------------|----------------|
+|--cpu      | 2               | number of CPUs |
+|--mem      | 20              | memory         |
+|--strelka  | conda default   | Strelka installation dir |
 
-Flags are special parameters without value.
+**(--strelka) If using conda or container, the path is already set to default installation path**
 
-| Name  | Description |
-|-----------|-------------| 
-| --help | print usage and optional parameters |
-| --exome | automatically set up parameters for exome data |
-| --rna | automatically set up parameters for rna data (only available for --mode germline) |
-| --AF | Add AF field to VCF (only available for --mode somatic) |
-|--outputCallableRegions | Create a BED track containing regions which are determined to be callable |
+| Name      |  Description    |
+|-----------|-----------------| 
+|--help | print usage and optional parameters |
+|--exome | automatically set up parameters for exome data |
+|--rna | automatically set up parameters for rna data (only available for --mode germline) |
 
-## Usage
+## Modes
+
+| Name     | Default value   | Description    |
+|----------|-----------------|----------------| 
+| --mode   | somatic         | Mode for variant calling; one of somatic, germline, genotyping |
+| --config | strelka default | Use custom configuration file |
+
+**Strelka default config for somatic is configureStrelkaSomaticWorkflow.py.ini and configureStrelkaGermlineWorkflow.py.ini in germline mode**
 
 ### mode somatic
+
 `nextflow run iarcbioinfo/strelka2-nf r v1.2a -profile singularity --mode somatic --ref hg38.fa --tn_pairs pairs.txt --input_folder path/to/cram/ --strelka path/to/strelka/`
 
-To run the pipeline without singularity just remove "-profile singularity". Alternatively, one can run the pipeline using a docker container (-profile docker) the conda receipe containing all required dependencies (-profile conda).
+To run the pipeline without singularity just remove "-profile singularity". Alternatively, one can run the pipeline using a docker container (-profile docker), apptainer (-profile apptainer) or the conda receipe containing all required dependencies (-profile conda).
 
 ### mode germline
+
 `nextflow run iarcbioinfo/strelka2-nf r v1.2a -profile singularity --mode germline --ref hg38.fa --input_folder path/to/cram/ --strelka path/to/strelka/`
 
 ### genotyping
 When using the input_file mode, if a vcf column with the path to a VCF file for each sample containing a list of somatic variant is provided, the pipeline will use the --forcedGT option from strelka that genotypes these positions, and compute a bedfile for these positions so only variants from the VCF will be genotyped. Note that genotyping can be performed both in somatic mode (in which case tumor/normal pairs must be provided) and germline mode (in which case a single cram file must be provided).
 
-## Output
-  | Type      | Description     |
-  |-----------|---------------|
-  | VCFs/raw/\*.vcf.gz    | VCF files before filtering |
-  | VCFs/withAF/\*.vcf   | VCF files with AF field (optional, requires flag --AF) |
-  | VCFs/filtered/\*PASS.vcf.gz    | final compressed and indexed VCF files (optionally with flag --AF) |
-  | CallableRegions/\*.bed.gz    | compressed and indexed BED files (optionally with flag --outputCallableRegions) |
+## Outputs
+
+| Name     | Default value   | Description    |
+|----------|-----------------|----------------|
+|--output_folder         | strelka_ouptut | Output folder for vcf files |
+
+| Name                   | Description |
+|------------------------|-------------| 
+|--AF                    | Add AF field to VCF (only available for --mode somatic) |
+|--outputCallableRegions | Create a BED track containing regions which are determined to be callable |
+
+The output_folder directory contains severals subfolders : 
+| Type                        | Description |
+|-----------------------------|-------------|
+| VCFs/raw/\*.vcf.gz          | VCF files before filtering |
+| VCFs/filtered/\*PASS.vcf.gz | final compressed and indexed VCF files |
+| CallableRegions/\*.bed.gz   | compressed and indexed BED files (optionally with flag --outputCallableRegions) |
   
-  Final vcf files have companion tabix index files (.tbi). Note that in germline mode, the VCF outputted corresponds to variants only (file variants.vcf.gz from strelka). 
+Final vcf files have companion tabix index files (.tbi). Note that in germline mode, the VCF outputted corresponds to variants only (file variants.vcf.gz from strelka). 
 
 ## Directed Acyclic Graph
 [![DAG](dag.png)](http://htmlpreview.github.io/?https://github.com/IARCbioinfo/strelka-nf/blob/master/dag.html)
@@ -86,7 +98,7 @@ When using the input_file mode, if a vcf column with the path to a VCF file for 
 
 ## Contributions
 
-  | Name      | Email | Description     |
-  |-----------|---------------|-----------------| 
-  | Vincent Cahais | CahaisV@iarc.fr | Developer |
-  | Nicolas Alcala | AlcalaN@iarc.fr    | Developer|
+  | Name           | Email           | Description |
+  |----------------|-----------------|-------------| 
+  | Vincent Cahais | CahaisV@iarc.fr | Developer   |
+  | Nicolas Alcala | AlcalaN@iarc.fr | Developer   |
