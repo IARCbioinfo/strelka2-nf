@@ -15,7 +15,7 @@
 |----------|---------------|
 |--tn_file | Tab delimited text file with either two columns called normal and tumor (somatic mode) or one column called bam (germline mode); optionally, a column called sample containing sample names to be used for naming the files can be provided and for genotyping (see genotyping mode below) a column called vcf has to be provided |
 
-Note: the file provided to --input_file is where you can define pairs of bam/cram to analyse with strelka in somatic mode. It's a tabular file with 3 columns sample, normal and tumor.
+Note: the file provided to --tn_file is where you can define pairs of bam/cram to analyse with strelka in somatic mode. It's a tabular file with 3 columns sample, normal and tumor.
 
 | sample            | normal       | tumor       |
 | ----------------- | ------------ | ----------- |
@@ -70,7 +70,7 @@ To run the pipeline without singularity just remove "-profile singularity". Alte
 `nextflow run iarcbioinfo/strelka2-nf r v1.2a -profile singularity --mode germline --ref hg38.fa --input_folder path/to/cram/ --strelka path/to/strelka/`
 
 ### genotyping
-When using the input_file mode, if a vcf column with the path to a VCF file for each sample containing a list of somatic variant is provided, the pipeline will use the --forcedGT option from strelka that genotypes these positions, and compute a bedfile for these positions so only variants from the VCF will be genotyped. Note that genotyping can be performed both in somatic mode (in which case tumor/normal pairs must be provided) and germline mode (in which case a single cram file must be provided).
+In the tn_file, if a vcf column with the path to a VCF file for each sample containing a list of somatic variant is provided, the pipeline will use the --forcedGT option from strelka that genotypes these positions, and compute a bedfile for these positions so only variants from the VCF will be genotyped. Note that genotyping can be performed both in somatic mode (in which case tumor/normal pairs must be provided) and germline mode (in which case a single cram file must be provided).
 
 ## Outputs
 
