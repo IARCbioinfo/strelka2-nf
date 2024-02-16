@@ -61,13 +61,13 @@ Intervals to call in bed format (CHR START END).
 
 ### mode somatic
 
-`nextflow run iarcbioinfo/strelka2-nf r v1.2a -profile singularity --mode somatic --ref hg38.fa --tn_pairs pairs.txt --input_folder path/to/cram/ --strelka path/to/strelka/`
+`nextflow run iarcbioinfo/strelka2-nf -r dsl2 -profile singularity --mode somatic --ref hg38.fa --tn_file pairs.txt --input_folder path/to/cram/ --strelka path/to/strelka/`
 
 To run the pipeline without singularity just remove "-profile singularity". Alternatively, one can run the pipeline using a docker container (-profile docker), apptainer (-profile apptainer) or the conda receipe containing all required dependencies (-profile conda).
 
 ### mode germline
 
-`nextflow run iarcbioinfo/strelka2-nf r v1.2a -profile singularity --mode germline --ref hg38.fa --input_folder path/to/cram/ --strelka path/to/strelka/`
+`nextflow run iarcbioinfo/strelka2-nf -r dsl2 -profile singularity --mode germline --ref hg38.fa --input_folder path/to/cram/ --strelka path/to/strelka/`
 
 ### genotyping
 In the tn_file, if a vcf column with the path to a VCF file for each sample containing a list of somatic variant is provided, the pipeline will use the --forcedGT option from strelka that genotypes these positions, and compute a bedfile for these positions so only variants from the VCF will be genotyped. Note that genotyping can be performed both in somatic mode (in which case tumor/normal pairs must be provided) and germline mode (in which case a single cram file must be provided).
